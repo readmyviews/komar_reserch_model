@@ -58,12 +58,23 @@ country = st.sidebar.radio("Country/Listing Region:", options=["India", "US"], i
 
 st.sidebar.markdown("<br/>", unsafe_allow_html=True)
 
-# Verify API Keys
-gemini_api_key = os.getenv("GEMINI_API_KEY")
+# Verify API Keys (Check st.secrets first for deployment, fallback to environment)
+gemini_api_key = None
+try:
+    if "GEMINI_API_KEY" in st.secrets:
+        gemini_api_key = st.secrets["GEMINI_API_KEY"]
+except Exception:
+    pass
+
 if not gemini_api_key:
-    st.sidebar.error("⚠️ GEMINI_API_KEY is missing! Add it to your .env file to enable qualitative reasoning.")
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+
+if not gemini_api_key:
+    st.sidebar.error("⚠️ GEMINI_API_KEY is missing! Add it to .streamlit/secrets.toml or your .env file to enable qualitative reasoning.")
+    api_configured = False
 else:
     st.sidebar.success("🔑 Gemini API Key configured.")
+    api_configured = True
 
 analyze_btn = st.sidebar.button("Run Detective Analysis 🔍")
 
@@ -81,9 +92,8 @@ st.sidebar.markdown("""
 
 # Trigger analysis or retrieve from state to optimize rendering (Streamlit session state)
 if analyze_btn or "metrics" in st.session_state:
-    if not gemini_api_key and not os.getenv("GEMINI_API_KEY"):
-        # Attempt fallback to loaded environment key in case of manual entry
-        st.error("Please add a `GEMINI_API_KEY` to your `.env` file first.")
+    if not api_configured:
+        st.error("Please add a valid `GEMINI_API_KEY` to your secrets configuration first.")
     elif not stock_name:
         st.warning("Please enter a valid stock name or ticker symbol.")
     else:

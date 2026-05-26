@@ -3,9 +3,12 @@ import os
 from unittest.mock import patch, MagicMock
 from src.agent import generate_komar_analysis
 
-@patch.dict(os.environ, {"GEMINI_API_KEY": "dummy_key"})
+@patch("src.agent._get_secret")
 @patch("src.agent.genai.Client")
-def test_generate_komar_analysis(mock_client_class):
+def test_generate_komar_analysis(mock_client_class, mock_get_secret):
+    # Mock secrets to be independent of local secrets.toml on disk
+    mock_get_secret.side_effect = lambda key, default=None: "dummy_key" if key == "GEMINI_API_KEY" else (default or "gemini-2.5-flash")
+
     mock_client = MagicMock()
     mock_client_class.return_value = mock_client
     mock_response = MagicMock()
@@ -47,9 +50,12 @@ def test_generate_komar_analysis(mock_client_class):
     assert res["buying_range_status"] == "IN BUY ZONE"
     assert " Tata Power " in res["sister_stocks_details"]
 
-@patch.dict(os.environ, {"GEMINI_API_KEY": "dummy_key", "GEMINI_MODEL": "gemini-3.1-pro-preview"})
+@patch("src.agent._get_secret")
 @patch("src.agent.genai.Client")
-def test_generate_komar_analysis_fallback_on_rate_limit(mock_client_class):
+def test_generate_komar_analysis_fallback_on_rate_limit(mock_client_class, mock_get_secret):
+    # Mock secrets to be independent of local secrets.toml on disk
+    mock_get_secret.side_effect = lambda key, default=None: "dummy_key" if key == "GEMINI_API_KEY" else ("gemini-3.1-pro-preview" if key == "GEMINI_MODEL" else default)
+
     mock_client = MagicMock()
     mock_client_class.return_value = mock_client
     

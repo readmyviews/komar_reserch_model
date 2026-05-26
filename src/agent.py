@@ -24,6 +24,19 @@ class AnalysisResponse(BaseModel):
     buying_range_status: str = Field(description="Buying status of the current stock price relative to the buying range (e.g. 'IN BUY ZONE', 'AWAITING PULLBACK', or 'BREAKOUT BUY')")
     verdict: str = Field(description="Brief final verdict on whether the stock fits the Julian Komar institutional accumulation profile")
 
+def _get_secret(key: str, default: str = None) -> str:
+    """
+    Safely retrieves a secret from Streamlit's st.secrets if running in a Streamlit context,
+    otherwise falls back to environment variables.
+    """
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and key in st.secrets:
+            return st.secrets[key]
+    except Exception:
+        pass
+    return os.getenv(key, default)
+
 def _execute_gemini_call(client: genai.Client, model_name: str, system_instruction: str, prompt: str) -> dict:
     """
     Private helper to fire the content generation request to a specific Gemini model
@@ -55,11 +68,12 @@ def generate_komar_analysis(name: str, country: str, stats: dict) -> dict:
     Formulates a detailed research prompt applying the Julian Komar framework.
     Invokes Gemini with a structured JSON schema. Automatically handles
     rate limits (429 / resource exhausted) by falling back to gemini-2.5-flash.
+    Retrieves the API key and model config using Streamlit secrets and fallback environment variables.
     """
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = _get_secret("GEMINI_API_KEY")
     if not api_key:
-        logger.error("GEMINI_API_KEY environment variable is missing!")
-        raise ValueError("GEMINI_API_KEY environment variable is not set. Please add it to your .env file.")
+        logger.error("GEMINI_API_KEY environment variable/secret is missing!")
+        raise ValueError("GEMINI_API_KEY secret is not set. Please add it to your secrets.toml or .env file.")
         
     client = genai.Client(api_key=api_key)
     
@@ -105,7 +119,7 @@ def generate_komar_analysis(name: str, country: str, stats: dict) -> dict:
     Structure your analysis to follow Julian Komar's framework exactly. Return your findings as a high-fidelity JSON object conforming to the response schema.
     """
     
-    primary_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip()
+    primary_model = _get_secret("GEMINI_MODEL", "gemini-2.5-flash").strip()
     fallback_model = "gemini-2.5-flash"
     
     try:
