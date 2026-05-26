@@ -58,12 +58,25 @@ country = st.sidebar.radio("Country/Listing Region:", options=["India", "US"], i
 
 st.sidebar.markdown("<br/>", unsafe_allow_html=True)
 
-# Verify API Keys
-gemini_api_key = os.getenv("GEMINI_API_KEY")
-if not gemini_api_key:
-    st.sidebar.error("⚠️ GEMINI_API_KEY is missing! Add it to your .env file to enable qualitative reasoning.")
+# Verify API Keys based on LLM_PROVIDER
+llm_provider = os.getenv("LLM_PROVIDER", "gemini").strip().lower()
+
+if llm_provider == "anthropic":
+    anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not anthropic_api_key:
+        st.sidebar.error("⚠️ ANTHROPIC_API_KEY is missing! Add it to your .env file to enable qualitative reasoning.")
+        api_configured = False
+    else:
+        st.sidebar.success("🔑 Anthropic API Key configured.")
+        api_configured = True
 else:
-    st.sidebar.success("🔑 Gemini API Key configured.")
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_api_key:
+        st.sidebar.error("⚠️ GEMINI_API_KEY is missing! Add it to your .env file to enable qualitative reasoning.")
+        api_configured = False
+    else:
+        st.sidebar.success("🔑 Gemini API Key configured.")
+        api_configured = True
 
 analyze_btn = st.sidebar.button("Run Detective Analysis 🔍")
 
@@ -81,9 +94,8 @@ st.sidebar.markdown("""
 
 # Trigger analysis or retrieve from state to optimize rendering (Streamlit session state)
 if analyze_btn or "metrics" in st.session_state:
-    if not gemini_api_key and not os.getenv("GEMINI_API_KEY"):
-        # Attempt fallback to loaded environment key in case of manual entry
-        st.error("Please add a `GEMINI_API_KEY` to your `.env` file first.")
+    if not api_configured:
+        st.error(f"Please add a valid API key to your `.env` file first for {llm_provider.capitalize()}.")
     elif not stock_name:
         st.warning("Please enter a valid stock name or ticker symbol.")
     else:
