@@ -1,0 +1,96 @@
+import os
+import json
+import logging
+import time
+from google import genai
+from google.genai import types
+from pydantic import BaseModel, Field
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Configure logging
+logger = logging.getLogger("komar.agent")
+
+class AnalysisResponse(BaseModel):
+    stock_category: str = Field(description="Explicitly categorize as CANSLIM Stock, Sales Grower, or Story Stock")
+    fundamental_layer_details: str = Field(description="Analysis of Sales & EPS growth YoY against target thresholds (20%, 30%, 40%+)")
+    story_layer_details: str = Field(description="Detective breakdown of the business model, products, and key future catalysts (AI, clean energy, SaaS, robotics, etc.)")
+    sister_stocks_details: str = Field(description="Direct competitors or sister stocks in same sector globally/locally showing strong growth/momentum, and sector trend validation")
+    liquidity_details: str = Field(description="Liquidity assessment comparing average daily dollar volume to Julian Komar's minimum thresholds ($20M-$100M USD mature, $5M-$10M USD young micro-cap)")
+    rating: int = Field(description="Julian Komar rating score from 1 (poor fit) to 5 (perfect fit)")
+    verdict: str = Field(description="Brief final verdict on whether the stock fits the Julian Komar institutional accumulation profile")
+
+def generate_komar_analysis(name: str, country: str, stats: dict) -> dict:
+    """
+    Formulates a detailed research prompt applying the Julian Komar framework to the stock.
+    Invokes Gemini 2.5 Flash with a structured JSON schema, and returns the parsed dictionary.
+    """
+    start_time = time.time()
+    logger.info(f"Initiating Gemini detective analysis for stock '{name}' ({country})")
+    
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        logger.error("GEMINI_API_KEY environment variable is missing!")
+        raise ValueError("GEMINI_API_KEY environment variable is not set. Please add it to your .env file.")
+        
+    try:
+        logger.debug("Initializing Google GenAI Client")
+        client = genai.Client(api_key=api_key)
+        
+        system_instruction = (
+            "You are an expert stock market analyst applying seasoned trader Julian Komar's "
+            "fundamental and thematic research methodology. You act like a 'detective' to figure "
+            "out exactly what big institutional investors see in a company's fundamentals and thematic story.\n\n"
+            "Analyze the user-provided stock by detailing: \n"
+            "1. Fundamental Growth Layer: Evaluate YoY Sales/EPS growth figures against target thresholds (20%, 30%, 40%+). Categorize the stock as CANSLIM Stock, Sales Grower, or Story Stock.\n"
+            "2. The Story Layer: Explain the business model, current success, and core future catalysts (AI, cloud, cyber, clean energy, biotech, etc.).\n"
+            "3. Sister Stocks & Theme Alignment: List 3-4 competitor/sister stocks in the same country or globally also showing strong momentum. Confirm if the overall industry/theme is in high institutional demand.\n"
+            "4. Institutional Quality Check (Liquidity): Compare average daily dollar volume to Komar's minimum thresholds ($20M-$100M USD mature, $5M-$10M USD young micro-cap). Assess if institutions can accumulate and exit safely.\n\n"
+            "Provide a final verdict and a rating from 1 to 5 stars. Keep descriptions analytical, insightful, and detailed. DO NOT use generic filler text."
+        )
+        
+        # Format metrics beautifully
+        formatted_vol = f"${stats['avg_daily_dollar_volume']:,.2f}"
+        formatted_sales = f"{stats['sales_growth_yoy']:.2f}%"
+        formatted_eps = f"{stats['eps_growth_yoy']:.2f}%"
+        
+        prompt = f"""
+        Conduct a comprehensive detective-style fundamental & thematic analysis for:
+        - Stock Name: {name}
+        - Country: {country}
+        - Resolved Ticker: {stats['ticker']}
+        - Current Price: {stats['current_price']:.2f}
+        
+        Calculated Quantitative Financial Metrics (Use these directly in your growth and liquidity evaluations):
+        - YoY Sales Growth: {formatted_sales}
+        - YoY EPS Growth: {formatted_eps}
+        - Average Daily Dollar Volume (30-day window): {formatted_vol} USD equivalent
+        
+        Structure your analysis to follow Julian Komar's framework exactly. Return your findings as a high-fidelity JSON object conforming to the response schema.
+        """
+        
+        logger.info(f"Firing request to model 'gemini-2.5-flash' for ticker '{stats['ticker']}'")
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                response_mime_type="application/json",
+                response_schema=AnalysisResponse,
+                temperature=0.2
+            )
+        )
+        
+        elapsed = time.time() - start_time
+        logger.info(f"Gemini analysis completed successfully in {elapsed:.2f}s")
+        
+        # Parse the JSON response
+        result_dict = json.loads(response.text)
+        logger.debug(f"Parsed response JSON successfully: {list(result_dict.keys())}")
+        return result_dict
+        
+    except Exception as e:
+        logger.error(f"Error executing Gemini detective analysis for '{name}': {str(e)}", exc_info=True)
+        raise
