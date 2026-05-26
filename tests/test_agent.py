@@ -46,3 +46,67 @@ def test_generate_komar_analysis(mock_client_class):
     assert res["buying_range"] == "₹480 - ₹510"
     assert res["buying_range_status"] == "IN BUY ZONE"
     assert " Tata Power " in res["sister_stocks_details"]
+
+@patch.dict(os.environ, {"GEMINI_API_KEY": "dummy_key", "GEMINI_MODEL": "gemini-3.1-pro-preview"})
+@patch("src.agent.genai.Client")
+def test_generate_komar_analysis_fallback_on_rate_limit(mock_client_class):
+    mock_client = MagicMock()
+    mock_client_class.return_value = mock_client
+    
+    # Define a side_effect function for generate_content
+    # The first call (with gemini-3.1-pro-preview) will raise a rate-limit exception
+    # The second call (with gemini-2.5-flash fallback) will succeed
+    call_count = 0
+    
+    mock_response = MagicMock()
+    mock_response.text = (
+        '{"stock_category": "Story Stock", '
+        '"fundamental_layer_details": "EPS Growth is 80%.", '
+        '"story_layer_details": "Nvidia is the AI chips leader.", '
+        '"sister_stocks_details": "AMD is also showing strong momentum.", '
+        '"liquidity_details": "High daily dollar volume.", '
+        '"rating": 9, '
+        '"rating_breakdown": "- Sales Growth: 2/2", '
+        '"buying_range": "$900 - $950", '
+        '"buying_range_status": "AWAITING PULLBACK", '
+        '"verdict": "Fits profile perfectly"}'
+    )
+    
+    def mock_generate_content(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            # Raise resource exhausted / rate limit error
+            raise Exception("429 Resource Exhausted: Quota exceeded for gemini-3.1-pro-preview")
+        return mock_response
+        
+    mock_client.models.generate_content.side_effect = mock_generate_content
+    
+    stats = {
+        "ticker": "NVDA",
+        "current_price": 920.0,
+        "recent_volume": 40000000,
+        "avg_daily_dollar_volume": 36000000000.0,
+        "sales_growth_yoy": 250.0,
+        "eps_growth_yoy": 400.0,
+        "market_cap": 2200000000000.0,
+        "sma_50": 850.0,
+        "sma_200": 700.0,
+        "is_above_50_sma": True,
+        "is_above_200_sma": True,
+        "price_return_30d": 15.0
+    }
+    
+    res = generate_komar_analysis("Nvidia", "US", stats)
+    assert res["stock_category"] == "Story Stock"
+    assert res["rating"] == 9
+    assert res["buying_range"] == "$900 - $950"
+    
+    # Confirm generate_content was called twice (first failed, second succeeded)
+    assert call_count == 2
+    
+    # Check that the second call was called with fallback model gemini-2.5-flash
+    calls = mock_client.models.generate_content.call_args_list
+    assert len(calls) == 2
+    assert calls[0][1]["model"] == "gemini-3.1-pro-preview"
+    assert calls[1][1]["model"] == "gemini-2.5-flash"
