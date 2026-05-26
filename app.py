@@ -77,13 +77,13 @@ else:
     st.sidebar.success("🔑 Gemini API Key configured.")
     api_configured = True
 
-analyze_btn = st.sidebar.button("Run Detective Analysis 🔍")
+analyze_btn = st.sidebar.button("Run Analysis")
 
 # Display quick guidelines in the sidebar
 st.sidebar.markdown("""
 <br/><hr style="border-color: rgba(255, 255, 255, 0.08);"/>
 <h5 style="color: #94a3b8; margin-bottom: 0.5rem;">Julian Komar Core Rules</h5>
-<p style="color: #64748b; font-size: 0.775rem; line-height: 1.4;">
+<p style="color: #cbd5e1; font-size: 0.775rem; line-height: 1.4;">
 1. <b>Hyper-Growth Sales</b>: Targets 20%, 30%, or 40%+ YoY Sales. Value stocks are ignored.<br/>
 2. <b>The Story & Theme</b>: Invests in strong catalysts and secular trends (AI, clean energy, SaaS).<br/>
 3. <b>Sister Stocks</b>: Avoids "lonely survivors". Direct competitors must show momentum.<br/>
@@ -309,7 +309,7 @@ if "analysis" in st.session_state:
     ])
     
     with tab1:
-        st.markdown(f"##### Stock Categorization: `{analysis['stock_category']}`")
+        st.markdown(f"##### Stock Categorization: <span class='komar-badge'>{analysis['stock_category']}</span>", unsafe_allow_html=True)
         st.write(analysis['fundamental_layer_details'])
         
     with tab2:
@@ -355,9 +355,9 @@ else:
     st.markdown("""
     <div style="padding: 2.5rem; background: rgba(30, 41, 59, 0.4); border-radius: 12px; border: 1px dashed rgba(255, 255, 255, 0.08); text-align: center; margin-top: 1rem;">
         <h4 style="color: #94a3b8; margin-bottom: 0.5rem;">🕵️‍♂️ The Detective is Waiting...</h4>
-        <p style="color: #64748b; font-size: 0.95rem; max-width: 600px; margin: 0 auto;">
+        <p style="color: #cbd5e1; font-size: 0.95rem; max-width: 600px; margin: 0 auto;">
             Configure the stock name and country listing region in the <b>Control Center</b> sidebar, 
-            then click <b>Run Detective Analysis 🔍</b> to fetch real-time analytics and launch our qualitative Gemini agent.
+            then click <b>Run Analysis</b> to fetch real-time analytics and launch our qualitative Gemini agent.
         </p>
     </div>
     """, unsafe_allow_html=True)

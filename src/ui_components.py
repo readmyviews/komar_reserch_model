@@ -42,8 +42,14 @@ def get_glassmorphic_css() -> str:
     }
     
     /* High contrast body text, paragraphs, list items, and markdown writes */
+    div[data-testid="stMarkdownContainer"],
     div[data-testid="stMarkdownContainer"] p,
+    div[data-testid="stMarkdownContainer"] span,
+    div[data-testid="stMarkdownContainer"] li,
+    .stMarkdown,
     .stMarkdown p,
+    .stMarkdown span,
+    .stMarkdown li,
     .stText,
     p,
     li,
@@ -74,48 +80,70 @@ def get_glassmorphic_css() -> str:
         font-weight: 700 !important;
     }
     
-    /* TradingView Dark Textbox Input Field Overrides */
-    div[data-testid="stTextInput"] input {
-        background-color: #1e222d !important;
+    /* Streamlit Radio options high contrast color overrides */
+    div[data-testid="stRadio"] label,
+    div[data-testid="stRadio"] p,
+    div[data-testid="stRadio"] span,
+    div[data-testid="stRadio"] div,
+    [data-testid="stSidebar"] div[data-testid="stRadio"] label,
+    [data-testid="stSidebar"] div[data-testid="stRadio"] p,
+    [data-testid="stSidebar"] div[data-testid="stRadio"] span,
+    [data-testid="stSidebar"] div[data-testid="stRadio"] div {
         color: #cbd5e1 !important;
+        font-weight: 500 !important;
+    }
+    
+    /* TradingView Dark Textbox Input Field Overrides */
+    div[data-testid="stTextInput"] div[data-baseweb="input"] {
+        background-color: #1e222d !important;
         border: 1px solid #363c4e !important;
-        border-radius: 6px !important;
-        font-size: 0.95rem !important;
-        padding: 0.5rem 0.75rem !important;
+        border-radius: 4px !important;
         transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
     }
-    div[data-testid="stTextInput"] input:focus {
+    div[data-testid="stTextInput"] input {
+        background-color: transparent !important;
+        color: #ffffff !important;
+        font-size: 0.95rem !important;
+        padding: 0.5rem 0.75rem !important;
+        border: none !important;
+    }
+    div[data-testid="stTextInput"] div[data-baseweb="input"]:focus-within {
         border-color: #2962ff !important;
         box-shadow: 0 0 0 1px #2962ff !important;
     }
     
     /* TradingView Flat Blue CTA Buttons overrides */
-    div.stButton > button:first-child {
+    div[data-testid="stButton"] button,
+    div.stButton > button,
+    .stButton button {
         background-color: #2962ff !important;
         background: #2962ff !important;
         color: #ffffff !important;
-        border-radius: 6px !important;
-        padding: 0.65rem 1.6rem !important;
+        border-radius: 4px !important;
+        padding: 0.55rem 1.4rem !important;
         font-weight: 600 !important;
-        font-size: 0.95rem !important;
+        font-size: 0.925rem !important;
         border: none !important;
         box-shadow: none !important;
-        transition: background-color 0.15s ease !important;
-        width: 100% !important;
         text-shadow: none !important;
+        transition: background-color 0.15s ease, transform 0.1s ease !important;
+        width: 100% !important;
     }
-    div.stButton > button:first-child:hover {
+    div[data-testid="stButton"] button:hover,
+    div.stButton > button:hover,
+    .stButton button:hover {
         background-color: #1e53e5 !important;
         background: #1e53e5 !important;
         color: #ffffff !important;
-        transform: none !important;
-        box-shadow: none !important;
         border: none !important;
+        box-shadow: none !important;
     }
-    div.stButton > button:first-child:active {
+    div[data-testid="stButton"] button:active,
+    div.stButton > button:active,
+    .stButton button:active {
         background-color: #1a49c7 !important;
         background: #1a49c7 !important;
-        transform: none !important;
+        border: none !important;
         box-shadow: none !important;
     }
     
