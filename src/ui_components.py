@@ -41,28 +41,82 @@ def get_glassmorphic_css() -> str:
         border-bottom: 1px solid rgba(255, 255, 255, 0.02) !important;
     }
     
-    /* Sleek Control Buttons with glowing cyber blue gradient */
+    /* High contrast body text, paragraphs, list items, and markdown writes */
+    div[data-testid="stMarkdownContainer"] p,
+    .stMarkdown p,
+    .stText,
+    p,
+    li,
+    div.stWrite {
+        color: #cbd5e1 !important; /* Professional light slate gray for outstanding contrast */
+        font-size: 0.95rem !important;
+        line-height: 1.65 !important;
+    }
+    
+    /* High contrast sidebar text rules and guidelines legibility */
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] li,
+    [data-testid="stSidebar"] div {
+        color: #94a3b8 !important; /* Slate-400 for maximum readability */
+        font-size: 0.85rem !important;
+        line-height: 1.525 !important;
+    }
+    
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] h4,
+    [data-testid="stSidebar"] h5,
+    [data-testid="stSidebar"] h6 {
+        color: #f8fafc !important;
+        font-weight: 700 !important;
+    }
+    
+    /* TradingView Dark Textbox Input Field Overrides */
+    div[data-testid="stTextInput"] input {
+        background-color: #1e222d !important;
+        color: #cbd5e1 !important;
+        border: 1px solid #363c4e !important;
+        border-radius: 6px !important;
+        font-size: 0.95rem !important;
+        padding: 0.5rem 0.75rem !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+    }
+    div[data-testid="stTextInput"] input:focus {
+        border-color: #2962ff !important;
+        box-shadow: 0 0 0 1px #2962ff !important;
+    }
+    
+    /* TradingView Flat Blue CTA Buttons overrides */
     div.stButton > button:first-child {
-        background: linear-gradient(135deg, #2563eb 0%, #0284c7 100%) !important;
+        background-color: #2962ff !important;
+        background: #2962ff !important;
         color: #ffffff !important;
-        border-radius: 10px !important;
-        padding: 0.65rem 2.2rem !important;
+        border-radius: 6px !important;
+        padding: 0.65rem 1.6rem !important;
         font-weight: 600 !important;
-        letter-spacing: 0.025em !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        box-shadow: 0 4px 20px rgba(37, 99, 235, 0.25) !important;
-        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        width: 100%;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+        font-size: 0.95rem !important;
+        border: none !important;
+        box-shadow: none !important;
+        transition: background-color 0.15s ease !important;
+        width: 100% !important;
+        text-shadow: none !important;
     }
     div.stButton > button:first-child:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 30px rgba(37, 99, 235, 0.45), 0 0 15px rgba(6, 182, 212, 0.3) !important;
+        background-color: #1e53e5 !important;
+        background: #1e53e5 !important;
         color: #ffffff !important;
-        border-color: rgba(255, 255, 255, 0.25) !important;
+        transform: none !important;
+        box-shadow: none !important;
+        border: none !important;
     }
     div.stButton > button:first-child:active {
-        transform: translateY(0px) !important;
+        background-color: #1a49c7 !important;
+        background: #1a49c7 !important;
+        transform: none !important;
+        box-shadow: none !important;
     }
     
     /* Premium Glassmorphic Metrics Panels */
@@ -125,33 +179,36 @@ def get_glassmorphic_css() -> str:
         margin-right: 0.1rem !important;
     }
     
-    /* Styled Custom Tabs Bar */
+    /* TradingView Custom Styled Tab Bar */
     div[data-testid="stTabBar"] {
-        background-color: rgba(10, 10, 12, 0.6) !important;
-        border: 1px solid rgba(255, 255, 255, 0.04) !important;
-        border-radius: 12px !important;
-        padding: 0.3rem !important;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.5) !important;
+        background-color: transparent !important;
+        border: none !important;
+        border-bottom: 1px solid #2a2e39 !important;
+        border-radius: 0px !important;
+        padding: 0px !important;
+        box-shadow: none !important;
     }
     button[data-baseweb="tab"] {
-        color: #94a3b8 !important;
-        font-size: 0.925rem !important;
+        color: #787b86 !important;
+        font-size: 0.9rem !important;
         font-weight: 600 !important;
-        padding: 0.55rem 1.4rem !important;
+        padding: 0.55rem 1.25rem !important;
         background: transparent !important;
         border: none !important;
-        border-radius: 9px !important;
-        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        margin-right: 4px !important;
+        border-radius: 0px !important;
+        border-bottom: 2px solid transparent !important;
+        transition: all 0.15s ease !important;
+        margin-right: 8px !important;
     }
     button[data-baseweb="tab"]:hover {
         color: #cbd5e1 !important;
-        background: rgba(255,255,255,0.02) !important;
+        background: transparent !important;
     }
     button[data-baseweb="tab"][aria-selected="true"] {
-        color: #3b82f6 !important;
-        background: rgba(37, 99, 235, 0.1) !important;
-        box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.18) !important;
+        color: #2962ff !important;
+        background: transparent !important;
+        border-bottom: 2px solid #2962ff !important;
+        box-shadow: none !important;
     }
     
     /* Styled custom tables */
@@ -181,6 +238,19 @@ def get_glassmorphic_css() -> str:
     }
     div[data-testid="stSidebar"] hr {
         border-color: rgba(255, 255, 255, 0.06) !important;
+    }
+    
+    /* Custom Neon-Blue Badges */
+    .komar-badge {
+        background: rgba(41, 98, 255, 0.12) !important;
+        color: #2962ff !important;
+        border: 1px solid rgba(41, 98, 255, 0.3) !important;
+        border-radius: 4px !important;
+        padding: 0.2rem 0.5rem !important;
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        display: inline-block !important;
+        text-shadow: none !important;
     }
     </style>
     """
