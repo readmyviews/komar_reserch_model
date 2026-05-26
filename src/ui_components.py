@@ -92,7 +92,7 @@ def get_glassmorphic_css() -> str:
     </style>
     """
 
-def get_price_chart(history: pd.DataFrame, ticker: str) -> go.Figure:
+def get_price_chart(history: pd.DataFrame, ticker: str, price_symbol: str = "$") -> go.Figure:
     """
     Returns a custom, high-fidelity dark-themed Plotly stock price area chart
     with a volume overlay in the background.
@@ -142,7 +142,7 @@ def get_price_chart(history: pd.DataFrame, ticker: str) -> go.Figure:
             tickfont=dict(color="#94a3b8")
         ),
         yaxis=dict(
-            title=dict(text="Price", font=dict(color="#3b82f6")),
+            title=dict(text=f"Price ({price_symbol})", font=dict(color="#3b82f6")),
             showgrid=True,
             gridcolor="rgba(255,255,255,0.03)",
             tickfont=dict(color="#3b82f6")
@@ -209,10 +209,10 @@ def get_growth_chart(sales_growth: float, eps_growth: float) -> go.Figure:
 
 def render_rating_stars(rating: int) -> str:
     """
-    Returns structured HTML rendering stars based on the 1-5 rating score.
+    Returns structured HTML rendering stars based on the 1-10 rating score.
     """
     stars = ""
-    for i in range(5):
+    for i in range(10):
         if i < rating:
             stars += '<span class="star-filled">★</span>'
         else:

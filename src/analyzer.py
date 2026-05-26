@@ -68,8 +68,9 @@ def resolve_ticker(name: str, country: str) -> str:
 @lru_cache(maxsize=128)
 def calculate_metrics(ticker_symbol: str) -> dict:
     """
-    Fetches real-time stock price, 30-day historical data, and financial statements
-    from yfinance. Computes Average Daily Dollar Volume and YoY Sales and EPS Growth.
+    Fetches real-time stock price, 250-day historical data, and financial statements
+    from yfinance. Computes Moving Averages (50/200 SMA), 30-day return,
+    Market Cap, Average Daily Dollar Volume, and YoY Sales/EPS Growth.
     """
     start_time = time.time()
     logger.info(f"Starting metric calculations for ticker '{ticker_symbol}'")
@@ -77,25 +78,65 @@ def calculate_metrics(ticker_symbol: str) -> dict:
     try:
         ticker = yf.Ticker(ticker_symbol)
         
-        # --- 1. Fetch Price History & Liquidity Check ---
-        logger.debug(f"Fetching 30d history for {ticker_symbol}")
-        history = ticker.history(period="30d")
-        if history.empty:
+        # --- 1. Fetch Price History & Technical Indicators (last 250 trading days) ---
+        logger.debug(f"Fetching 250d history for {ticker_symbol}")
+        history_full = ticker.history(period="250d")
+        if history_full.empty:
             logger.error(f"yfinance returned empty price history for {ticker_symbol}")
             raise ValueError(f"Could not fetch historical data for ticker '{ticker_symbol}'")
             
-        history["dollar_volume"] = history["Close"] * history["Volume"]
-        avg_daily_dollar_volume = float(history["dollar_volume"].mean())
-        current_price = float(history["Close"].iloc[-1])
-        recent_volume = int(history["Volume"].iloc[-1])
+        current_price = float(history_full["Close"].iloc[-1])
+        recent_volume = int(history_full["Volume"].iloc[-1])
         
-        logger.info(f"Successfully calculated liquidity metrics for {ticker_symbol}. Avg daily dollar volume: ${avg_daily_dollar_volume:,.2f} USD equiv.")
+        # Last 30 trading days for short-term liquidity calculations and chart
+        history_30d = history_full.iloc[-30:].copy()
+        history_30d["dollar_volume"] = history_30d["Close"] * history_30d["Volume"]
+        avg_daily_volume_native = float(history_30d["dollar_volume"].mean())
+        
+        # Convert daily volume to USD for standard Komar checks
+        avg_daily_dollar_volume = avg_daily_volume_native
+        if ticker_symbol.upper().endswith(".NS") or ticker_symbol.upper().endswith(".BO"):
+            avg_daily_dollar_volume = avg_daily_volume_native / 83.0
+        
+        # Compute Simple Moving Averages (SMA)
+        sma_50 = None
+        sma_200 = None
+        is_above_50_sma = False
+        is_above_200_sma = False
+        
+        if len(history_full) >= 50:
+            sma_50 = float(history_full["Close"].iloc[-50:].mean())
+            is_above_50_sma = current_price > sma_50
+            
+        if len(history_full) >= 200:
+            sma_200 = float(history_full["Close"].iloc[-200:].mean())
+            is_above_200_sma = current_price > sma_200
+            
+        # Compute 30-day Price Performance / Return
+        price_return_30d = 0.0
+        if len(history_full) >= 30:
+            price_30d_ago = float(history_full["Close"].iloc[-30])
+            if price_30d_ago > 0:
+                price_return_30d = float(((current_price - price_30d_ago) / price_30d_ago) * 100)
+        
+        logger.info(f"Successfully calculated liquidity and technical indicators for {ticker_symbol}.")
 
-        # --- 2. Fetch Growth Metrics (YoY Sales / EPS) ---
+        # --- 2. Fetch Market Cap from Ticker Info ---
+        market_cap_native = 0.0
+        try:
+            logger.debug(f"Fetching market cap from info dictionary for {ticker_symbol}")
+            market_cap_native = float(ticker.info.get("marketCap", 0.0))
+        except Exception as ex:
+            logger.debug(f"Failed to fetch market cap from info dict: {str(ex)}")
+
+        market_cap_usd = market_cap_native
+        if ticker_symbol.upper().endswith(".NS") or ticker_symbol.upper().endswith(".BO"):
+            market_cap_usd = market_cap_native / 83.0
+
+        # --- 3. Fetch Growth Metrics (YoY Sales / EPS) ---
         sales_growth_yoy = None
         eps_growth_yoy = None
         
-        # yfinance statements can be slow, log the attempt
         logger.debug(f"Fetching quarterly financials for {ticker_symbol}")
         quarterly_financials = ticker.quarterly_financials
         
@@ -156,13 +197,20 @@ def calculate_metrics(ticker_symbol: str) -> dict:
             "current_price": current_price,
             "recent_volume": recent_volume,
             "avg_daily_dollar_volume": avg_daily_dollar_volume,
+            "avg_daily_volume_native": avg_daily_volume_native,
             "sales_growth_yoy": float(sales_growth_yoy) if sales_growth_yoy is not None and not np.isnan(sales_growth_yoy) else 0.0,
-            "eps_growth_yoy": float(eps_growth_yoy) if eps_growth_yoy is not None and not np.isnan(eps_growth_yoy) else 0.0
+            "eps_growth_yoy": float(eps_growth_yoy) if eps_growth_yoy is not None and not np.isnan(eps_growth_yoy) else 0.0,
+            "market_cap": market_cap_native,
+            "market_cap_usd": market_cap_usd,
+            "sma_50": sma_50 if sma_50 is not None else current_price,
+            "sma_200": sma_200 if sma_200 is not None else current_price,
+            "is_above_50_sma": is_above_50_sma,
+            "is_above_200_sma": is_above_200_sma,
+            "price_return_30d": price_return_30d
         }
         
         logger.info(f"Completed metric calculations for {ticker_symbol} in {time.time() - start_time:.4f}s")
         return metrics_dict
-        
     except Exception as e:
         logger.error(f"Error calculating metrics for ticker {ticker_symbol}: {str(e)}", exc_info=True)
         raise

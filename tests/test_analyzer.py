@@ -21,3 +21,7 @@ def test_calculate_metrics():
     assert "avg_daily_dollar_volume" in metrics
     assert metrics["avg_daily_dollar_volume"] > 0
     assert metrics["current_price"] > 0
+    assert "market_cap" in metrics
+    assert "sma_50" in metrics
+    assert "sma_200" in metrics
+    assert "price_return_30d" in metrics

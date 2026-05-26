@@ -9,7 +9,7 @@ def test_ui_generators():
         "Volume": [1000, 1500, 1200]
     }, index=pd.date_range("2026-01-01", periods=3))
     
-    chart = get_price_chart(history_df, "TEST")
+    chart = get_price_chart(history_df, "TEST", "₹")
     assert isinstance(chart, go.Figure)
     
     growth_chart = get_growth_chart(35.0, 120.0)

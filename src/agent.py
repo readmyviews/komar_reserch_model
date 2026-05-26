@@ -18,7 +18,8 @@ class AnalysisResponse(BaseModel):
     story_layer_details: str = Field(description="Detective breakdown of the business model, products, and key future catalysts (AI, clean energy, SaaS, robotics, etc.)")
     sister_stocks_details: str = Field(description="Direct competitors or sister stocks in same sector globally/locally showing strong growth/momentum, and sector trend validation")
     liquidity_details: str = Field(description="Liquidity assessment comparing average daily dollar volume to Julian Komar's minimum thresholds ($20M-$100M USD mature, $5M-$10M USD young micro-cap)")
-    rating: int = Field(description="Julian Komar rating score from 1 (poor fit) to 5 (perfect fit)")
+    rating: int = Field(description="Julian Komar rating score from 1 (poor fit) to 10 (perfect fit)")
+    rating_breakdown: str = Field(description="Explain exactly why the rating out of 10 was given. Score each of these five dimensions (out of 2 points each): 1) YoY Sales Growth, 2) YoY EPS/Income Growth, 3) Catalyst & Secular Theme Power, 4) Sister Stock Support & Sector Momentum, 5) Liquidity & Institutional Size. Format as a clear, beautifully structured list showing points like '- YoY Sales Growth: 2/2' and summing up to the total score.")
     verdict: str = Field(description="Brief final verdict on whether the stock fits the Julian Komar institutional accumulation profile")
 
 def generate_komar_analysis(name: str, country: str, stats: dict) -> dict:
@@ -47,13 +48,20 @@ def generate_komar_analysis(name: str, country: str, stats: dict) -> dict:
             "2. The Story Layer: Explain the business model, current success, and core future catalysts (AI, cloud, cyber, clean energy, biotech, etc.).\n"
             "3. Sister Stocks & Theme Alignment: List 3-4 competitor/sister stocks in the same country or globally also showing strong momentum. Confirm if the overall industry/theme is in high institutional demand.\n"
             "4. Institutional Quality Check (Liquidity): Compare average daily dollar volume to Komar's minimum thresholds ($20M-$100M USD mature, $5M-$10M USD young micro-cap). Assess if institutions can accumulate and exit safely.\n\n"
-            "Provide a final verdict and a rating from 1 to 5 stars. Keep descriptions analytical, insightful, and detailed. DO NOT use generic filler text."
+            "Provide a final verdict, a rating score from 1 to 10, and a rigorous rating breakdown scoring five key elements (2 points each) to explain exactly why this rating was given. "
+            "Also factor in whether the stock is in a solid uptrend based on its 50-day and 200-day Simple Moving Averages. Keep descriptions analytical, insightful, and detailed. DO NOT use generic filler text."
         )
         
         # Format metrics beautifully
         formatted_vol = f"${stats['avg_daily_dollar_volume']:,.2f}"
         formatted_sales = f"{stats['sales_growth_yoy']:.2f}%"
         formatted_eps = f"{stats['eps_growth_yoy']:.2f}%"
+        formatted_mcap = f"${stats['market_cap']:,.2f}"
+        sma_status = (
+            f"Trading ABOVE 50 SMA (${stats['sma_50']:.2f}) and ABOVE 200 SMA (${stats['sma_200']:.2f})" 
+            if stats['is_above_50_sma'] and stats['is_above_200_sma'] 
+            else f"SMA 50: ${stats['sma_50']:.2f} (Above: {stats['is_above_50_sma']}), SMA 200: ${stats['sma_200']:.2f} (Above: {stats['is_above_200_sma']})"
+        )
         
         prompt = f"""
         Conduct a comprehensive detective-style fundamental & thematic analysis for:
@@ -61,11 +69,14 @@ def generate_komar_analysis(name: str, country: str, stats: dict) -> dict:
         - Country: {country}
         - Resolved Ticker: {stats['ticker']}
         - Current Price: {stats['current_price']:.2f}
+        - Market Cap (raw): {formatted_mcap}
         
         Calculated Quantitative Financial Metrics (Use these directly in your growth and liquidity evaluations):
         - YoY Sales Growth: {formatted_sales}
         - YoY EPS Growth: {formatted_eps}
         - Average Daily Dollar Volume (30-day window): {formatted_vol} USD equivalent
+        - 30-Day Price Momentum / Return: {stats['price_return_30d']:.2f}%
+        - Technical Trend (SMAs): {sma_status}
         
         Structure your analysis to follow Julian Komar's framework exactly. Return your findings as a high-fidelity JSON object conforming to the response schema.
         """

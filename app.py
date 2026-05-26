@@ -129,11 +129,12 @@ if "analysis" in st.session_state:
     history = st.session_state["history"]
     resolved_ticker = st.session_state["resolved_ticker"]
     
-    # ------------------ Row 1: Glassmorphic Metrics Summary Cards ------------------
+    # ------------------ Row 1: Glassmorphic Metrics Summary Cards (Row 1) ------------------
+    price_symbol = "₹" if country == "India" else "$"
+    
     col1, col2, col3, col4 = st.columns(4)
     
     # 1. Price card
-    price_symbol = "₹" if country == "India" else "$"
     with col1:
         st.markdown(f"""
         <div class="komar-card">
@@ -143,64 +144,135 @@ if "analysis" in st.session_state:
         </div>
         """, unsafe_allow_html=True)
         
-    # 2. Daily Dollar Volume (Liquidity Check)
-    avg_vol = stats['avg_daily_dollar_volume']
-    is_liquid = avg_vol >= 5000000.0 # Min micro-cap emerging threshold is $5M USD
-    liq_class = "status-positive" if is_liquid else "status-negative"
-    liq_text = "PASSED (>$5M)" if is_liquid else "LOW VOLUME"
+    # 2. Market Cap Card
+    mcap_native = stats.get('market_cap', 0.0)
+    if mcap_native >= 1e12:
+        mcap_text = f"{price_symbol}{mcap_native/1e12:.2f}T"
+    elif mcap_native >= 1e9:
+        mcap_text = f"{price_symbol}{mcap_native/1e9:.2f}B"
+    elif mcap_native >= 1e6:
+        mcap_text = f"{price_symbol}{mcap_native/1e6:.2f}M"
+    else:
+        mcap_text = f"{price_symbol}{mcap_native:,.2f}"
+        
     with col2:
         st.markdown(f"""
         <div class="komar-card">
-            <div class="komar-metric-title">DAILY DOLLAR VOLUME</div>
-            <div class="komar-metric-value">${avg_vol/1e6:.2f}M USD</div>
-            <div class="komar-metric-status {liq_class}">Liquidity: {liq_text}</div>
+            <div class="komar-metric-title">MARKET CAPITALIZATION</div>
+            <div class="komar-metric-value">{mcap_text}</div>
+            <div class="komar-metric-status">Native Valuation</div>
         </div>
         """, unsafe_allow_html=True)
         
-    # 3. YoY Sales Growth (Fundamental Growth Check)
-    sales_growth = stats['sales_growth_yoy']
-    growth_passed = sales_growth >= 20.0
-    growth_class = "status-positive" if growth_passed else "status-negative"
-    growth_text = "PASSED (20%+)" if growth_passed else "UNDERPERFORMING"
+    # 3. 30-Day Return card
+    ret_30d = stats.get('price_return_30d', 0.0)
+    ret_class = "status-positive" if ret_30d >= 0 else "status-negative"
+    ret_sign = "+" if ret_30d >= 0 else ""
     with col3:
         st.markdown(f"""
         <div class="komar-card">
-            <div class="komar-metric-title">YOY SALES GROWTH</div>
-            <div class="komar-metric-value">{sales_growth:.1f}%</div>
-            <div class="komar-metric-status {growth_class}">{growth_text}</div>
+            <div class="komar-metric-title">30-DAY PERFORMANCE</div>
+            <div class="komar-metric-value {ret_class}">{ret_sign}{ret_30d:.1f}%</div>
+            <div class="komar-metric-status">Price Momentum</div>
         </div>
         """, unsafe_allow_html=True)
         
-    # 4. Rating Stars
+    # 4. Rating Card (out of 10)
     stars_html = render_rating_stars(analysis['rating'])
     with col4:
         st.markdown(f"""
         <div class="komar-card">
             <div class="komar-metric-title">KOMAR RATING</div>
-            <div style="margin: 0.15rem 0;">{stars_html}</div>
+            <div style="margin: 0.1rem 0;">{stars_html}</div>
             <div class="komar-metric-status" style="color:#f59e0b; font-weight:700;">
-                Category: {analysis['stock_category']}
+                Score: {analysis['rating']}/10 ({analysis['stock_category']})
             </div>
         </div>
         """, unsafe_allow_html=True)
+
+    # ------------------ Row 2: Glassmorphic Metrics Summary Cards (Row 2) ------------------
+    col2_1, col2_2, col2_3, col2_4 = st.columns(4)
+    
+    # 1. Sales Growth Card
+    sales_growth = stats['sales_growth_yoy']
+    growth_passed = sales_growth >= 20.0
+    growth_class = "status-positive" if growth_passed else "status-negative"
+    growth_text = "PASSED (20%+)" if growth_passed else "LOW GROWTH"
+    with col2_1:
+        st.markdown(f"""
+        <div class="komar-card">
+            <div class="komar-metric-title">YOY SALES GROWTH</div>
+            <div class="komar-metric-value">{sales_growth:.1f}%</div>
+            <div class="komar-metric-status {growth_class}">Komar Threshold: {growth_text}</div>
+        </div>
+        """, unsafe_allow_html=True)
         
-    # ------------------ Row 2: Charts and Visualizations ------------------
+    # 2. EPS Growth Card
+    eps_growth = stats['eps_growth_yoy']
+    eps_passed = eps_growth >= 20.0
+    eps_class = "status-positive" if eps_passed else "status-negative"
+    eps_text = "PASSED (20%+)" if eps_passed else "LOW EARNINGS"
+    with col2_2:
+        st.markdown(f"""
+        <div class="komar-card">
+            <div class="komar-metric-title">YOY EPS GROWTH</div>
+            <div class="komar-metric-value">{eps_growth:.1f}%</div>
+            <div class="komar-metric-status {eps_class}">Komar Threshold: {eps_text}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # 3. Daily Volume (Localized native AND USD)
+    avg_vol_native = stats.get('avg_daily_volume_native', stats['avg_daily_dollar_volume'])
+    if avg_vol_native >= 1e9:
+        vol_native_text = f"{price_symbol}{avg_vol_native/1e9:.2f}B"
+    else:
+        vol_native_text = f"{price_symbol}{avg_vol_native/1e6:.2f}M"
+        
+    avg_vol_usd = stats['avg_daily_dollar_volume']
+    is_liquid = avg_vol_usd >= 5000000.0 # Emerging micro-cap threshold
+    liq_class = "status-positive" if is_liquid else "status-negative"
+    liq_text = "LIQUID" if is_liquid else "ILLIQUID"
+    
+    with col2_3:
+        st.markdown(f"""
+        <div class="komar-card">
+            <div class="komar-metric-title">DAILY DOLLAR VOLUME</div>
+            <div class="komar-metric-value">{vol_native_text} <span style="font-size:1rem; color:#64748b;">/ ${avg_vol_usd/1e6:.1f}M USD</span></div>
+            <div class="komar-metric-status {liq_class}">Komar Liquidity: {liq_text}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # 4. Moving Average Trend Card
+    sma_above_all = stats.get('is_above_50_sma', False) and stats.get('is_above_200_sma', False)
+    trend_class = "status-positive" if sma_above_all else "status-negative"
+    trend_text = "BULLISH UPTREND" if sma_above_all else "NEUTRAL / BEARISH"
+    with col2_4:
+        st.markdown(f"""
+        <div class="komar-card">
+            <div class="komar-metric-title">TECHNICAL TREND STATUS</div>
+            <div class="komar-metric-value {trend_class}">{trend_text}</div>
+            <div class="komar-metric-status">50 & 200 SMA Alignment</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    # ------------------ Row 3: Charts and Visualizations ------------------
     chart_col1, chart_col2 = st.columns([2, 1])
     with chart_col1:
-        st.plotly_chart(get_price_chart(history, resolved_ticker), use_container_width=True)
+        st.plotly_chart(get_price_chart(history, resolved_ticker, price_symbol), use_container_width=True)
     with chart_col2:
         st.plotly_chart(get_growth_chart(stats['sales_growth_yoy'], stats['eps_growth_yoy']), use_container_width=True)
         
-    # ------------------ Row 3: Gemini Detective Analytical Reports ------------------
+    # ------------------ Row 4: Gemini Detective Analytical Reports ------------------
     st.markdown("""
     <h3 style="color:#3b82f6; margin-top:1.5rem; margin-bottom: 0.75rem;">🕵️‍♂️ Detective Research Analysis Report</h3>
     """, unsafe_allow_html=True)
     
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "📊 Fundamental Growth Layer", 
         "🔥 The Story & Catalysts", 
         "👯 Sister Stocks & Theme", 
-        "🏁 Quality Check & Verdict"
+        "🏁 Quality Check & Verdict",
+        "🎯 Rating Decision Scorecard"
     ])
     
     with tab1:
@@ -219,6 +291,32 @@ if "analysis" in st.session_state:
         st.markdown("<hr style='border-color:rgba(255,255,255,0.05)'/>", unsafe_allow_html=True)
         st.markdown("##### Final Detective Verdict")
         st.info(analysis['verdict'])
+        
+    with tab5:
+        st.markdown(f"### Julian Komar Decision Score: `{analysis['rating']}/10`")
+        st.markdown("Here is the exact scorecard breakdown leading to this detective analysis rating:")
+        
+        # Display Gemini rating breakdown list
+        st.markdown(f"""
+        <div style="background: rgba(30, 41, 59, 0.4); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 1.5rem;">
+            {analysis['rating_breakdown']}
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("#### Technical Moving Averages Support Card")
+        # Build technical indicators table
+        sma50_icon = "✅ Above" if stats['is_above_50_sma'] else "❌ Below"
+        sma200_icon = "✅ Above" if stats['is_above_200_sma'] else "❌ Below"
+        
+        st.table(pd.DataFrame({
+            "Indicator / Metric": ["Current Stock Price", "50-Day Simple Moving Average (SMA)", "200-Day Simple Moving Average (SMA)"],
+            "Value": [
+                f"{price_symbol}{stats['current_price']:.2f}",
+                f"{price_symbol}{stats['sma_50']:.2f}",
+                f"{price_symbol}{stats['sma_200']:.2f}"
+            ],
+            "Trend Status": ["Base Reference", sma50_icon, sma200_icon]
+        }))
 else:
     # Warm welcome instruction box
     st.markdown("""
