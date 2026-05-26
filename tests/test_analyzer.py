@@ -4,6 +4,10 @@ from src.analyzer import resolve_ticker, calculate_metrics
 def test_resolve_ticker_india():
     assert resolve_ticker("Adani Power", "India") == "ADANIPOWER.NS"
 
+def test_resolve_ticker_india_with_spaces():
+    assert resolve_ticker("Tata Power", "India") == "TATAPOWER.NS"
+    assert resolve_ticker("TATA POWER.NS", "India") == "TATAPOWER.NS"
+
 def test_resolve_ticker_us():
     assert resolve_ticker("Nvidia", "US") == "NVDA"
 

@@ -16,6 +16,8 @@ logger = logging.getLogger("komar.analyzer")
 TICKER_OVERRIDES = {
     "adani power": "ADANIPOWER.NS",
     "adani": "ADANIPOWER.NS",
+    "tata power": "TATAPOWER.NS",
+    "tata": "TATAPOWER.NS",
     "nvidia": "NVDA",
     "tesla": "TSLA",
     "apple": "AAPL",
@@ -55,6 +57,9 @@ def resolve_ticker(name: str, country: str) -> str:
     else:
         resolved = name_clean.upper()
         
+    # Clean up spaces in symbols (e.g. 'TATA POWER.NS' -> 'TATAPOWER.NS')
+    resolved = resolved.replace(" ", "")
+    
     logger.info(f"Resolved name '{name_clean}' ({country}) to ticker '{resolved}' in {time.time() - start_time:.4f}s")
     return resolved
 
