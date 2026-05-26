@@ -280,9 +280,9 @@ if "analysis" in st.session_state:
     # ------------------ Row 3: Charts and Visualizations ------------------
     chart_col1, chart_col2 = st.columns([2, 1])
     with chart_col1:
-        st.plotly_chart(get_price_chart(history, resolved_ticker, price_symbol), use_container_width=True)
+        st.plotly_chart(get_price_chart(history, resolved_ticker, price_symbol), width="stretch")
     with chart_col2:
-        st.plotly_chart(get_growth_chart(stats['sales_growth_yoy'], stats['eps_growth_yoy']), use_container_width=True)
+        st.plotly_chart(get_growth_chart(stats['sales_growth_yoy'], stats['eps_growth_yoy']), width="stretch")
         
     # ------------------ Row 4: Gemini Detective Analytical Reports ------------------
     st.markdown("""
