@@ -8,7 +8,6 @@ from src.agent import generate_komar_analysis
 def test_generate_komar_analysis(mock_client_class):
     mock_client = MagicMock()
     mock_client_class.return_value = mock_client
-    
     mock_response = MagicMock()
     # Mocking standard structured response JSON
     mock_response.text = (
@@ -19,6 +18,8 @@ def test_generate_komar_analysis(mock_client_class):
         '"liquidity_details": "Trading volume is robust, allowing institutions safe entries/exits.", '
         '"rating": 8, '
         '"rating_breakdown": "- Sales Growth: 2/2\\n- EPS Growth: 2/2\\n- Catalyst: 2/2\\n- Sister Stocks: 1/2\\n- Liquidity: 1/2", '
+        '"buying_range": "₹480 - ₹510", '
+        '"buying_range_status": "IN BUY ZONE", '
         '"verdict": "Adani Power is an excellent Julian Komar candidate due to massive growth."}'
     )
     mock_client.models.generate_content.return_value = mock_response
@@ -42,4 +43,6 @@ def test_generate_komar_analysis(mock_client_class):
     assert res["stock_category"] == "CANSLIM Stock"
     assert res["rating"] == 8
     assert "Sales Growth" in res["rating_breakdown"]
+    assert res["buying_range"] == "₹480 - ₹510"
+    assert res["buying_range_status"] == "IN BUY ZONE"
     assert " Tata Power " in res["sister_stocks_details"]

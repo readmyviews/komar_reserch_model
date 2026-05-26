@@ -132,7 +132,7 @@ if "analysis" in st.session_state:
     # ------------------ Row 1: Glassmorphic Metrics Summary Cards (Row 1) ------------------
     price_symbol = "₹" if country == "India" else "$"
     
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     
     # 1. Price card
     with col1:
@@ -144,7 +144,29 @@ if "analysis" in st.session_state:
         </div>
         """, unsafe_allow_html=True)
         
-    # 2. Market Cap Card
+    # 2. Optimal Buying Range Card
+    buy_range_val = analysis.get('buying_range', 'Calculating...')
+    buy_status = analysis.get('buying_range_status', 'N/A')
+    
+    # Format status colors nicely
+    buy_status_lower = buy_status.lower()
+    if "buy" in buy_status_lower or "zone" in buy_status_lower or "passed" in buy_status_lower:
+        buy_status_class = "status-positive"
+    elif "pullback" in buy_status_lower or "wait" in buy_status_lower or "retracement" in buy_status_lower:
+        buy_status_class = "status-negative"
+    else:
+        buy_status_class = ""
+        
+    with col2:
+        st.markdown(f"""
+        <div class="komar-card">
+            <div class="komar-metric-title">OPTIMAL BUYING RANGE</div>
+            <div class="komar-metric-value" style="font-size:1.45rem; line-height:2.1rem;">{buy_range_val}</div>
+            <div class="komar-metric-status {buy_status_class}">Status: {buy_status}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    # 3. Market Cap Card
     mcap_native = stats.get('market_cap', 0.0)
     if mcap_native >= 1e12:
         mcap_text = f"{price_symbol}{mcap_native/1e12:.2f}T"
@@ -155,7 +177,7 @@ if "analysis" in st.session_state:
     else:
         mcap_text = f"{price_symbol}{mcap_native:,.2f}"
         
-    with col2:
+    with col3:
         st.markdown(f"""
         <div class="komar-card">
             <div class="komar-metric-title">MARKET CAPITALIZATION</div>
@@ -164,11 +186,11 @@ if "analysis" in st.session_state:
         </div>
         """, unsafe_allow_html=True)
         
-    # 3. 30-Day Return card
+    # 4. 30-Day Return card
     ret_30d = stats.get('price_return_30d', 0.0)
     ret_class = "status-positive" if ret_30d >= 0 else "status-negative"
     ret_sign = "+" if ret_30d >= 0 else ""
-    with col3:
+    with col4:
         st.markdown(f"""
         <div class="komar-card">
             <div class="komar-metric-title">30-DAY PERFORMANCE</div>
@@ -177,9 +199,9 @@ if "analysis" in st.session_state:
         </div>
         """, unsafe_allow_html=True)
         
-    # 4. Rating Card (out of 10)
+    # 5. Rating Card (out of 10)
     stars_html = render_rating_stars(analysis['rating'])
-    with col4:
+    with col5:
         st.markdown(f"""
         <div class="komar-card">
             <div class="komar-metric-title">KOMAR RATING</div>

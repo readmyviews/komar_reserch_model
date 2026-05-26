@@ -20,6 +20,8 @@ class AnalysisResponse(BaseModel):
     liquidity_details: str = Field(description="Liquidity assessment comparing average daily dollar volume to Julian Komar's minimum thresholds ($20M-$100M USD mature, $5M-$10M USD young micro-cap)")
     rating: int = Field(description="Julian Komar rating score from 1 (poor fit) to 10 (perfect fit)")
     rating_breakdown: str = Field(description="Explain exactly why the rating out of 10 was given. Score each of these five dimensions (out of 2 points each): 1) YoY Sales Growth, 2) YoY EPS/Income Growth, 3) Catalyst & Secular Theme Power, 4) Sister Stock Support & Sector Momentum, 5) Liquidity & Institutional Size. Format as a clear, beautifully structured list showing points like '- YoY Sales Growth: 2/2' and summing up to the total score.")
+    buying_range: str = Field(description="A suggested optimal buying price range in native currency (e.g. ₹480 - ₹510 or $185 - $195) based on technical setup, key SMAs, and support/resistance zones. Provide the native currency symbol (₹ or $) inside the range string.")
+    buying_range_status: str = Field(description="Buying status of the current stock price relative to the buying range (e.g. 'IN BUY ZONE', 'AWAITING PULLBACK', or 'BREAKOUT BUY')")
     verdict: str = Field(description="Brief final verdict on whether the stock fits the Julian Komar institutional accumulation profile")
 
 def generate_komar_analysis(name: str, country: str, stats: dict) -> dict:
@@ -81,10 +83,12 @@ def generate_komar_analysis(name: str, country: str, stats: dict) -> dict:
         Structure your analysis to follow Julian Komar's framework exactly. Return your findings as a high-fidelity JSON object conforming to the response schema.
         """
         
-        logger.info(f"Firing request to model 'gemini-2.5-flash' for ticker '{stats['ticker']}'")
+        # Load premium model from environment, fallback to gemini-2.5-pro for high-fidelity research
+        model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-pro")
+        logger.info(f"Firing request to model '{model_name}' for ticker '{stats['ticker']}'")
         
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model=model_name,
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
