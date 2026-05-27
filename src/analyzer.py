@@ -510,3 +510,10 @@ def calculate_metrics(ticker_symbol: str) -> dict:
     except Exception as e:
         logger.error(f"Error calculating metrics for ticker {ticker_symbol}: {str(e)}", exc_info=True)
         raise
+
+# Force-clear cache on module load to prevent persistent stale cache issues in Streamlit processes
+try:
+    calculate_metrics.cache_clear()
+    logger.info("Successfully flushed calculate_metrics lru_cache")
+except Exception as ex:
+    logger.debug(f"Failed to clear cache: {str(ex)}")

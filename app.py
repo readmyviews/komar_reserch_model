@@ -183,19 +183,32 @@ if "analysis" in st.session_state:
         news_list = st.session_state.get("news", [])
         if news_list:
             for item in news_list[:3]:
-                title = item.get("title", "News Headline")
-                link = item.get("link", "#")
-                publisher = item.get("publisher", "Source")
-                news_html += f"""
-                <div style="margin-bottom: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 0.5rem;">
-                    <a href="{link}" target="_blank" style="color: #2962ff; text-decoration: none; font-weight: 600; font-size: 0.9rem; line-height: 1.4; display: block;">
-                        🔗 {title}
-                    </a>
-                    <span style="color: #64748b; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-top: 0.25rem; display: block;">
-                        📰 {publisher}
-                    </span>
-                </div>
-                """
+                # Dynamic yfinance news schema nested & flat resolver
+                content = item.get("content", item)
+                
+                title = content.get("title")
+                if not title:
+                    title = item.get("title", "News Headline")
+                    
+                link = "#"
+                if "clickThroughUrl" in content:
+                    link = content["clickThroughUrl"].get("url", "#")
+                elif "canonicalUrl" in content:
+                    link = content["canonicalUrl"].get("url", "#")
+                else:
+                    link = item.get("link", "#")
+                    
+                publisher = "Source"
+                if "provider" in content:
+                    publisher = content["provider"].get("displayName", "Source")
+                else:
+                    publisher = item.get("publisher", "Source")
+                
+                # Flat string representation to prevent Markdown 4-space code block rendering bugs
+                news_html += f'<div style="margin-bottom: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 0.5rem;">' \
+                             f'<a href="{link}" target="_blank" style="color: #2962ff; text-decoration: none; font-weight: 600; font-size: 0.9rem; line-height: 1.4; display: block;">🔗 {title}</a>' \
+                             f'<span style="color: #64748b; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-top: 0.25rem; display: block;">📰 {publisher}</span>' \
+                             f'</div>'
         else:
             news_html = "<p style='color: #64748b; font-size: 0.9rem; margin-top: 1rem;'>No recent news or updates available.</p>"
             

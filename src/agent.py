@@ -85,6 +85,7 @@ def generate_komar_analysis(name: str, country: str, stats: dict) -> dict:
         "fundamental and thematic research methodology. You act like a 'detective' to figure "
         "out exactly what big institutional investors see in a company's fundamentals and thematic story.\n\n"
         "Analyze the user-provided stock by detailing: \n"
+        "0. Company Overview Profile: Provide a concise 2-sentence summary of the company and its operations (company_brief), and list 2-3 key strategic/financial strengths (key_strengths) and 2-3 key weaknesses (key_weaknesses).\n"
         "1. Fundamental Growth Layer: Evaluate YoY Sales/EPS growth figures against target thresholds (20%, 30%, 40%+). Categorize the stock as CANSLIM Stock, Sales Grower, or Story Stock.\n"
         "2. The Story Layer: Explain the business model, current success, and core future catalysts (AI, cloud, cyber, clean energy, biotech, etc.).\n"
         "3. Sister Stocks & Theme Alignment: List 3-4 competitor/sister stocks in the same country or globally also showing strong momentum. Confirm if the overall industry/theme is in high institutional demand.\n"
