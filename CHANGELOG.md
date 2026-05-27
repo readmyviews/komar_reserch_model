@@ -1,11 +1,30 @@
 # Changelog
 
-All notable changes to the **Julian Komar Stock Detective Dashboard** will be documented in this file.
+All notable changes to the **Pratik Patel Stock Detective Dashboard** will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+
+## [1.1.0] - 2026-05-27
+
+### Added
+- **Global Branding Update**:
+  - Rebranded all user-facing descriptions, headers, and dashboard page configs to `"Pratik Patel"`.
+  - Re-aligned Google Gemini system prompt instructions so qualitative analysis evaluates stocks according to *Pratik Patel's* growth framework.
+- **Top-Level Company Profile & News Widget**:
+  - Expanded Gemini qualitative analysis to dynamically generate a company brief and a bulleted list of 2-3 key strengths and weaknesses.
+  - Programmed dynamic news retrieval pulling the top 3 latest stock news articles from yfinance directly.
+  - Implemented a wide dual-column top layout panel display.
+- **EVA & MVA Financial Calculations**:
+  - Coded dynamic WACC, NOPAT, Invested Capital, and Book Value estimations pulling from yfinance statements.
+  - Designed beautiful glassmorphic KPI card overlays displaying native Economic Value Added (EVA) and Market Value Added (MVA) valuations.
+- **4 Market Phases Technical Indicator**:
+  - Programmed rolling Pandas math calculating SMA200 and its 20-day slope rate of change.
+  - Implemented parameterized phase classifications (*Accumulation*, *Uptrend*, *Distribution*, *Downtrend*) showing a neon-colored status badge.
+- **Automated Verification Extensions**:
+  - Added new comprehensive test file `tests/test_financials_and_phases.py` verifying all mathematical cost metrics and phase classification boundaries. All 13 tests pass.
 
 ## [1.0.0] - 2026-05-26
 
