@@ -25,3 +25,7 @@ def test_calculate_metrics():
     assert "sma_50" in metrics
     assert "sma_200" in metrics
     assert "price_return_30d" in metrics
+    assert "eva_native" in metrics
+    assert "mva_native" in metrics
+    assert "market_phase" in metrics
+    assert metrics["market_phase"] in ["Accumulation", "Uptrend", "Distribution", "Downtrend"]

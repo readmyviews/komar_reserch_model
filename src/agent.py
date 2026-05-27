@@ -14,15 +14,18 @@ logger = logging.getLogger("komar.agent")
 
 class AnalysisResponse(BaseModel):
     stock_category: str = Field(description="Explicitly categorize as CANSLIM Stock, Sales Grower, or Story Stock")
+    company_brief: str = Field(description="A concise 2-sentence summary of the company and its core products/services.")
+    key_strengths: list[str] = Field(description="A list containing 2-3 key strengths.")
+    key_weaknesses: list[str] = Field(description="A list containing 2-3 key weaknesses.")
     fundamental_layer_details: str = Field(description="Analysis of Sales & EPS growth YoY against target thresholds (20%, 30%, 40%+)")
     story_layer_details: str = Field(description="Detective breakdown of the business model, products, and key future catalysts (AI, clean energy, SaaS, robotics, etc.)")
     sister_stocks_details: str = Field(description="Direct competitors or sister stocks in same sector globally/locally showing strong growth/momentum, and sector trend validation")
-    liquidity_details: str = Field(description="Liquidity assessment comparing average daily dollar volume to Julian Komar's minimum thresholds ($20M-$100M USD mature, $5M-$10M USD young micro-cap)")
-    rating: int = Field(description="Julian Komar rating score from 1 (poor fit) to 10 (perfect fit)")
+    liquidity_details: str = Field(description="Liquidity assessment comparing average daily dollar volume to Pratik Patel's minimum thresholds ($20M-$100M USD mature, $5M-$10M USD young micro-cap)")
+    rating: int = Field(description="Pratik Patel rating score from 1 (poor fit) to 10 (perfect fit)")
     rating_breakdown: str = Field(description="Explain exactly why the rating out of 10 was given. Score each of these five dimensions (out of 2 points each): 1) YoY Sales Growth, 2) YoY EPS/Income Growth, 3) Catalyst & Secular Theme Power, 4) Sister Stock Support & Sector Momentum, 5) Liquidity & Institutional Size. Format as a clear, beautifully structured list showing points like '- YoY Sales Growth: 2/2' and summing up to the total score.")
     buying_range: str = Field(description="A suggested optimal buying price range in native currency (e.g. ₹480 - ₹510 or $185 - $195) based on technical setup, key SMAs, and support/resistance zones. Provide the native currency symbol (₹ or $) inside the range string.")
     buying_range_status: str = Field(description="Buying status of the current stock price relative to the buying range (e.g. 'IN BUY ZONE', 'AWAITING PULLBACK', or 'BREAKOUT BUY')")
-    verdict: str = Field(description="Brief final verdict on whether the stock fits the Julian Komar institutional accumulation profile")
+    verdict: str = Field(description="Brief final verdict on whether the stock fits the Pratik Patel institutional accumulation profile")
 
 def _get_secret(key: str, default: str = None) -> str:
     """
@@ -78,14 +81,14 @@ def generate_komar_analysis(name: str, country: str, stats: dict) -> dict:
     client = genai.Client(api_key=api_key)
     
     system_instruction = (
-        "You are an expert stock market analyst applying seasoned trader Julian Komar's "
+        "You are an expert stock market analyst applying seasoned trader Pratik Patel's "
         "fundamental and thematic research methodology. You act like a 'detective' to figure "
         "out exactly what big institutional investors see in a company's fundamentals and thematic story.\n\n"
         "Analyze the user-provided stock by detailing: \n"
         "1. Fundamental Growth Layer: Evaluate YoY Sales/EPS growth figures against target thresholds (20%, 30%, 40%+). Categorize the stock as CANSLIM Stock, Sales Grower, or Story Stock.\n"
         "2. The Story Layer: Explain the business model, current success, and core future catalysts (AI, cloud, cyber, clean energy, biotech, etc.).\n"
         "3. Sister Stocks & Theme Alignment: List 3-4 competitor/sister stocks in the same country or globally also showing strong momentum. Confirm if the overall industry/theme is in high institutional demand.\n"
-        "4. Institutional Quality Check (Liquidity): Compare average daily dollar volume to Komar's minimum thresholds ($20M-$100M USD mature, $5M-$10M USD young micro-cap). Assess if institutions can accumulate and exit safely.\n\n"
+        "4. Institutional Quality Check (Liquidity): Compare average daily dollar volume to Patel's minimum thresholds ($20M-$100M USD mature, $5M-$10M USD young micro-cap). Assess if institutions can accumulate and exit safely.\n\n"
         "Provide a final verdict, a rating score from 1 to 10, and a rigorous rating breakdown scoring five key elements (2 points each) to explain exactly why this rating was given. "
         "Also factor in whether the stock is in a solid uptrend based on its 50-day and 200-day Simple Moving Averages. Keep descriptions analytical, insightful, and detailed. DO NOT use generic filler text."
     )
@@ -116,7 +119,7 @@ def generate_komar_analysis(name: str, country: str, stats: dict) -> dict:
     - 30-Day Price Momentum / Return: {stats['price_return_30d']:.2f}%
     - Technical Trend (SMAs): {sma_status}
     
-    Structure your analysis to follow Julian Komar's framework exactly. Return your findings as a high-fidelity JSON object conforming to the response schema.
+    Structure your analysis to follow Pratik Patel's framework exactly. Return your findings as a high-fidelity JSON object conforming to the response schema.
     """
     
     primary_model = _get_secret("GEMINI_MODEL", "gemini-2.5-flash").strip()

@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 import streamlit as st
 import yfinance as yf
 import pandas as pd
@@ -26,7 +27,7 @@ logger = logging.getLogger("komar.app")
 
 # Set Page Config for responsive full-screen layouts
 st.set_page_config(
-    page_title="Julian Komar Stock Detective",
+    page_title="Pratik Patel Stock Detective",
     page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -38,9 +39,9 @@ st.markdown(get_glassmorphic_css(), unsafe_allow_html=True)
 # Main Application Title Header
 st.markdown("""
 <div style="text-align: center; margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-    <h1 style="color: #3b82f6; margin-bottom: 0.5rem; font-size: 2.75rem; text-shadow: 0 0 10px rgba(59, 130, 246, 0.25);">🔍 Komar Stock Detective</h1>
+    <h1 style="color: #3b82f6; margin-bottom: 0.5rem; font-size: 2.75rem; text-shadow: 0 0 10px rgba(59, 130, 246, 0.25);">🔍 Patel Stock Detective</h1>
     <p style="color: #94a3b8; font-size: 1.05rem; max-width: 800px; margin: 0 auto; line-height: 1.5;">
-        Apply seasoned growth investor <b>Julian Komar's</b> specific fundamental, thematic, and institutional liquidity 
+        Apply seasoned growth investor <b>Pratik Patel's</b> specific fundamental, thematic, and institutional liquidity 
         research framework to Indian and US equities. Powered by live Yahoo Finance datasets and Gemini AI.
     </p>
 </div>
@@ -82,7 +83,7 @@ analyze_btn = st.sidebar.button("Run Analysis")
 # Display quick guidelines in the sidebar
 st.sidebar.markdown("""
 <br/><hr style="border-color: rgba(255, 255, 255, 0.08);"/>
-<h5 style="color: #94a3b8; margin-bottom: 0.5rem;">Julian Komar Core Rules</h5>
+<h5 style="color: #94a3b8; margin-bottom: 0.5rem;">Pratik Patel Core Rules</h5>
 <p style="color: #cbd5e1; font-size: 0.775rem; line-height: 1.4;">
 1. <b>Hyper-Growth Sales</b>: Targets 20%, 30%, or 40%+ YoY Sales. Value stocks are ignored.<br/>
 2. <b>The Story & Theme</b>: Invests in strong catalysts and secular trends (AI, clean energy, SaaS).<br/>
@@ -113,6 +114,12 @@ if analyze_btn or "metrics" in st.session_state:
                     # Fetch price history for custom Plotly rendering
                     ticker_obj = yf.Ticker(resolved_ticker)
                     history = ticker_obj.history(period="30d")
+                    try:
+                        news_list = ticker_obj.news
+                        if not news_list:
+                            news_list = []
+                    except Exception:
+                        news_list = []
                     
                 with st.spinner("🧠 Step 2: Running Gemini detective to perform thematic research..."):
                     analysis = generate_komar_analysis(stock_name, country, stats)
@@ -122,6 +129,7 @@ if analyze_btn or "metrics" in st.session_state:
                 st.session_state["stats"] = stats
                 st.session_state["history"] = history
                 st.session_state["analysis"] = analysis
+                st.session_state["news"] = news_list[:3]
                 st.session_state["last_search_name"] = stock_name
                 st.session_state["last_search_country"] = country
                 st.session_state["metrics"] = True
@@ -140,6 +148,66 @@ if "analysis" in st.session_state:
     history = st.session_state["history"]
     resolved_ticker = st.session_state["resolved_ticker"]
     
+    # ------------------ Company Overview & News Section (Top of UI) ------------------
+    col_overview, col_news = st.columns([2, 1])
+    
+    with col_overview:
+        strengths_html = "".join(f"<li style='margin-bottom: 0.35rem; color:#cbd5e1;'><span style='color:#10b981; margin-right: 0.5rem;'>✓</span>{s}</li>" for s in analysis.get('key_strengths', []))
+        weaknesses_html = "".join(f"<li style='margin-bottom: 0.35rem; color:#cbd5e1;'><span style='color:#f43f5e; margin-right: 0.5rem;'>✗</span>{w}</li>" for w in analysis.get('key_weaknesses', []))
+        
+        st.markdown(f"""
+        <div class="komar-card" style="margin-bottom: 1.5rem; min-height: 250px;">
+            <h4 style="color: #3b82f6; margin-top: 0; margin-bottom: 0.75rem; font-size: 1.25rem;">🏢 Company Profile & Strategic Overview</h4>
+            <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.25rem;">
+                {analysis.get('company_brief', 'No dynamic profile summary available.')}
+            </p>
+            <div style="display: flex; gap: 1.5rem; width: 100%; margin-top: 0.5rem;">
+                <div style="flex: 1; background: rgba(16, 185, 129, 0.02); border: 1px solid rgba(16, 185, 129, 0.08); padding: 0.85rem 1.1rem; border-radius: 8px;">
+                    <div style="color: #10b981; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">💪 Core Strengths</div>
+                    <ul style="margin: 0; padding: 0; list-style-type: none; font-size: 0.875rem;">
+                        {strengths_html if strengths_html else "<li style='color:#64748b;'>No key strengths reported.</li>"}
+                    </ul>
+                </div>
+                <div style="flex: 1; background: rgba(244, 63, 94, 0.02); border: 1px solid rgba(244, 63, 94, 0.08); padding: 0.85rem 1.1rem; border-radius: 8px;">
+                    <div style="color: #f43f5e; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">⚠️ Key Weaknesses</div>
+                    <ul style="margin: 0; padding: 0; list-style-type: none; font-size: 0.875rem;">
+                        {weaknesses_html if weaknesses_html else "<li style='color:#64748b;'>No key weaknesses reported.</li>"}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with col_news:
+        news_html = ""
+        news_list = st.session_state.get("news", [])
+        if news_list:
+            for item in news_list[:3]:
+                title = item.get("title", "News Headline")
+                link = item.get("link", "#")
+                publisher = item.get("publisher", "Source")
+                news_html += f"""
+                <div style="margin-bottom: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 0.5rem;">
+                    <a href="{link}" target="_blank" style="color: #2962ff; text-decoration: none; font-weight: 600; font-size: 0.9rem; line-height: 1.4; display: block;">
+                        🔗 {title}
+                    </a>
+                    <span style="color: #64748b; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-top: 0.25rem; display: block;">
+                        📰 {publisher}
+                    </span>
+                </div>
+                """
+        else:
+            news_html = "<p style='color: #64748b; font-size: 0.9rem; margin-top: 1rem;'>No recent news or updates available.</p>"
+            
+        st.markdown(f"""
+        <div class="komar-card" style="margin-bottom: 1.5rem; min-height: 250px;">
+            <h4 style="color: #2962ff; margin-top: 0; margin-bottom: 0.75rem; font-size: 1.25rem;">📰 Recent Updates & News</h4>
+            <div style="max-height: 200px; overflow-y: auto; padding-right: 0.25rem;">
+                {news_html}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
     # ------------------ Row 1: Glassmorphic Metrics Summary Cards (Row 1) ------------------
     price_symbol = "₹" if country == "India" else "$"
     
@@ -215,7 +283,7 @@ if "analysis" in st.session_state:
     with col5:
         st.markdown(f"""
         <div class="komar-card">
-            <div class="komar-metric-title">KOMAR RATING</div>
+            <div class="komar-metric-title">PATEL RATING</div>
             <div style="margin: 0.1rem 0;">{stars_html}</div>
             <div class="komar-metric-status" style="color:#f59e0b; font-weight:700;">
                 Score: {analysis['rating']}/10 ({analysis['stock_category']})
@@ -236,7 +304,7 @@ if "analysis" in st.session_state:
         <div class="komar-card">
             <div class="komar-metric-title">YOY SALES GROWTH</div>
             <div class="komar-metric-value">{sales_growth:.1f}%</div>
-            <div class="komar-metric-status {growth_class}">Komar Threshold: {growth_text}</div>
+            <div class="komar-metric-status {growth_class}">Patel Threshold: {growth_text}</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -250,7 +318,7 @@ if "analysis" in st.session_state:
         <div class="komar-card">
             <div class="komar-metric-title">YOY EPS GROWTH</div>
             <div class="komar-metric-value">{eps_growth:.1f}%</div>
-            <div class="komar-metric-status {eps_class}">Komar Threshold: {eps_text}</div>
+            <div class="komar-metric-status {eps_class}">Patel Threshold: {eps_text}</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -271,20 +339,79 @@ if "analysis" in st.session_state:
         <div class="komar-card">
             <div class="komar-metric-title">DAILY DOLLAR VOLUME</div>
             <div class="komar-metric-value">{vol_native_text} <span style="font-size:1rem; color:#64748b;">/ ${avg_vol_usd/1e6:.1f}M USD</span></div>
-            <div class="komar-metric-status {liq_class}">Komar Liquidity: {liq_text}</div>
+            <div class="komar-metric-status {liq_class}">Patel Liquidity: {liq_text}</div>
         </div>
         """, unsafe_allow_html=True)
 
-    # 4. Moving Average Trend Card
+    # 4. Moving Average Trend Card & 4 Market Phases
     sma_above_all = stats.get('is_above_50_sma', False) and stats.get('is_above_200_sma', False)
     trend_class = "status-positive" if sma_above_all else "status-negative"
     trend_text = "BULLISH UPTREND" if sma_above_all else "NEUTRAL / BEARISH"
+    
+    phase_name = stats.get("market_phase", "Accumulation")
+    if phase_name == "Accumulation":
+        phase_badge_style = "background: rgba(59, 130, 246, 0.12); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3);"
+    elif phase_name == "Uptrend":
+        phase_badge_style = "background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);"
+    elif phase_name == "Distribution":
+        phase_badge_style = "background: rgba(234, 179, 8, 0.12); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3);"
+    else: # Downtrend
+        phase_badge_style = "background: rgba(244, 63, 94, 0.12); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3);"
+        
     with col2_4:
         st.markdown(f"""
         <div class="komar-card">
             <div class="komar-metric-title">TECHNICAL TREND STATUS</div>
-            <div class="komar-metric-value {trend_class}">{trend_text}</div>
-            <div class="komar-metric-status">50 & 200 SMA Alignment</div>
+            <div class="komar-metric-value {trend_class}" style="font-size: 1.55rem; line-height: 1.8rem; margin-bottom: 0.25rem;">{trend_text}</div>
+            <div style="margin-top: 0.35rem; margin-bottom: 0.1rem;">
+                <span style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-right: 0.5rem; letter-spacing: 0.05em;">Phase:</span>
+                <span style="font-size: 0.85rem; font-weight: 700; border-radius: 4px; padding: 0.2rem 0.5rem; {phase_badge_style}">{phase_name}</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ------------------ Row 2.5: Glassmorphic EVA and MVA KPI Cards ------------------
+    col_eva, col_mva = st.columns(2)
+    
+    # Format EVA
+    eva_val = stats.get("eva_native", 0.0)
+    eva_class = "status-positive" if eva_val >= 0 else "status-negative"
+    if abs(eva_val) >= 1e12:
+        eva_text = f"{price_symbol}{eva_val/1e12:.2f}T"
+    elif abs(eva_val) >= 1e9:
+        eva_text = f"{price_symbol}{eva_val/1e9:.2f}B"
+    elif abs(eva_val) >= 1e6:
+        eva_text = f"{price_symbol}{eva_val/1e6:.2f}M"
+    else:
+        eva_text = f"{price_symbol}{eva_val:,.2f}"
+        
+    # Format MVA
+    mva_val = stats.get("mva_native", 0.0)
+    mva_class = "status-positive" if mva_val >= 0 else "status-negative"
+    if abs(mva_val) >= 1e12:
+        mva_text = f"{price_symbol}{mva_val/1e12:.2f}T"
+    elif abs(mva_val) >= 1e9:
+        mva_text = f"{price_symbol}{mva_val/1e9:.2f}B"
+    elif abs(mva_val) >= 1e6:
+        mva_text = f"{price_symbol}{mva_val/1e6:.2f}M"
+    else:
+        mva_text = f"{price_symbol}{mva_val:,.2f}"
+
+    with col_eva:
+        st.markdown(f"""
+        <div class="komar-card">
+            <div class="komar-metric-title">ECONOMIC VALUE ADDED (EVA)</div>
+            <div class="komar-metric-value {eva_class}">{eva_text}</div>
+            <div class="komar-metric-status">NOPAT - (Invested Capital * WACC)</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_mva:
+        st.markdown(f"""
+        <div class="komar-card">
+            <div class="komar-metric-title">MARKET VALUE ADDED (MVA)</div>
+            <div class="komar-metric-value {mva_class}">{mva_text}</div>
+            <div class="komar-metric-status">Market Cap - Book Value of Equity</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -326,7 +453,7 @@ if "analysis" in st.session_state:
         st.info(analysis['verdict'])
         
     with tab5:
-        st.markdown(f"### Julian Komar Decision Score: `{analysis['rating']}/10`")
+        st.markdown(f"### Pratik Patel Decision Score: `{analysis['rating']}/10`")
         st.markdown("Here is the exact scorecard breakdown leading to this detective analysis rating:")
         
         # Display Gemini rating breakdown list

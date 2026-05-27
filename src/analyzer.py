@@ -63,6 +63,285 @@ def resolve_ticker(name: str, country: str) -> str:
     logger.info(f"Resolved name '{name_clean}' ({country}) to ticker '{resolved}' in {time.time() - start_time:.4f}s")
     return resolved
 
+def calculate_eva_mva(ticker: yf.Ticker, market_cap: float, ticker_symbol: str) -> dict:
+    """
+    Computes EVA and MVA metrics from yfinance balance sheet and financials dynamically.
+    Provides crash-proof defaults and safety bounds if data is sparse or missing.
+    """
+    logger.info(f"Calculating EVA and MVA for {ticker_symbol}")
+    is_india = ticker_symbol.upper().endswith(".NS") or ticker_symbol.upper().endswith(".BO")
+    
+    # 1. Total Book Value of Equity
+    book_value_equity = None
+    balance_sheet = None
+    try:
+        balance_sheet = ticker.balance_sheet
+    except Exception as ex:
+        logger.debug(f"Failed to fetch balance sheet for {ticker_symbol}: {str(ex)}")
+        
+    if balance_sheet is not None and not balance_sheet.empty:
+        idx_lower = [str(x).lower().strip() for x in balance_sheet.index]
+        for term in ["stockholders equity", "total stockholder equity", "common stock equity", "shareholders equity", "total equity"]:
+            if term in idx_lower:
+                try:
+                    match_idx = idx_lower.index(term)
+                    val = balance_sheet.iloc[match_idx].iloc[0]
+                    if val is not None and not pd.isna(val) and val != 0:
+                        book_value_equity = float(val)
+                        break
+                except Exception:
+                    pass
+                    
+    if book_value_equity is None or book_value_equity <= 0:
+        book_value_equity = market_cap * 0.45 # standard 45% equity-to-market-cap ratio fallback
+        logger.info(f"Using default book value of equity fallback: {book_value_equity:.2f}")
+        
+    # 2. Total Debt
+    total_debt = 0.0
+    try:
+        total_debt = float(ticker.info.get("totalDebt", 0.0))
+    except Exception:
+        pass
+        
+    if total_debt == 0.0 and balance_sheet is not None and not balance_sheet.empty:
+        idx_lower = [str(x).lower().strip() for x in balance_sheet.index]
+        debt_val = 0.0
+        for term in ["long term debt", "short term debt", "short long term debt", "current debt", "total debt"]:
+            if term in idx_lower:
+                try:
+                    match_idx = idx_lower.index(term)
+                    val = balance_sheet.iloc[match_idx].iloc[0]
+                    if val is not None and not pd.isna(val):
+                        debt_val += float(val)
+                except Exception:
+                    pass
+        if debt_val > 0:
+            total_debt = debt_val
+            
+    # 3. Cash and Cash Equivalents
+    total_cash = 0.0
+    try:
+        total_cash = float(ticker.info.get("totalCash", 0.0))
+    except Exception:
+        pass
+        
+    if total_cash == 0.0 and balance_sheet is not None and not balance_sheet.empty:
+        idx_lower = [str(x).lower().strip() for x in balance_sheet.index]
+        for term in ["cash and cash equivalents", "cash", "cash equivalents"]:
+            if term in idx_lower:
+                try:
+                    match_idx = idx_lower.index(term)
+                    val = balance_sheet.iloc[match_idx].iloc[0]
+                    if val is not None and not pd.isna(val):
+                        total_cash = float(val)
+                        break
+                except Exception:
+                    pass
+                    
+    # 4. Invested Capital
+    invested_capital = total_debt + book_value_equity - total_cash
+    if invested_capital <= 0:
+        invested_capital = book_value_equity # Fallback to equity
+        
+    # 5. EBIT (Operating Income)
+    ebit = None
+    financials = None
+    try:
+        financials = ticker.financials
+    except Exception as ex:
+        logger.debug(f"Failed to fetch financials for {ticker_symbol}: {str(ex)}")
+        
+    if financials is not None and not financials.empty:
+        idx_lower = [str(x).lower().strip() for x in financials.index]
+        for term in ["ebit", "operating income", "operating income or loss"]:
+            if term in idx_lower:
+                try:
+                    match_idx = idx_lower.index(term)
+                    val = financials.iloc[match_idx].iloc[0]
+                    if val is not None and not pd.isna(val):
+                        ebit = float(val)
+                        break
+                except Exception:
+                    pass
+                    
+    if ebit is None:
+        # Fallback based on revenue if possible
+        revenue = None
+        if financials is not None and not financials.empty:
+            idx_lower = [str(x).lower().strip() for x in financials.index]
+            if "total revenue" in idx_lower:
+                try:
+                    match_idx = idx_lower.index("total revenue")
+                    val = financials.iloc[match_idx].iloc[0]
+                    if val is not None and not pd.isna(val):
+                        revenue = float(val)
+                except Exception:
+                    pass
+        if revenue and revenue > 0:
+            ebit = revenue * 0.12 # assume 12% operating margin
+        else:
+            ebit = market_cap * 0.06 # assume 6% EBIT yield
+            
+    # 6. Effective Tax Rate
+    tax_rate = 0.25 if not is_india else 0.30
+    if financials is not None and not financials.empty:
+        idx_lower = [str(x).lower().strip() for x in financials.index]
+        tax_provision = 0.0
+        pretax_income = 0.0
+        
+        try:
+            if "tax provision" in idx_lower:
+                match_idx = idx_lower.index("tax provision")
+                val = financials.iloc[match_idx].iloc[0]
+                if val is not None and not pd.isna(val):
+                    tax_provision = float(val)
+            if "pretax income" in idx_lower:
+                match_idx = idx_lower.index("pretax income")
+                val = financials.iloc[match_idx].iloc[0]
+                if val is not None and not pd.isna(val):
+                    pretax_income = float(val)
+        except Exception:
+            pass
+            
+        if pretax_income > 0 and tax_provision >= 0:
+            calculated_rate = tax_provision / pretax_income
+            if 0.0 <= calculated_rate <= 0.45:
+                tax_rate = calculated_rate
+                
+    nopat = ebit * (1 - tax_rate)
+    
+    # 7. WACC
+    rf = 0.045 if not is_india else 0.07 # 4.5% US, 7% India
+    beta = 1.0
+    try:
+        info_beta = ticker.info.get("beta")
+        if info_beta is not None and float(info_beta) > 0:
+            beta = float(info_beta)
+    except Exception:
+        pass
+        
+    re = rf + beta * 0.055 # Risk-free + Beta * 5.5% Market Risk Premium
+    
+    # Cost of Debt
+    rd = 0.06 if not is_india else 0.085 # 6% US, 8.5% India
+    if financials is not None and not financials.empty and total_debt > 0:
+        idx_lower = [str(x).lower().strip() for x in financials.index]
+        if "interest expense" in idx_lower:
+            try:
+                match_idx = idx_lower.index("interest expense")
+                interest_val = financials.iloc[match_idx].iloc[0]
+                if interest_val is not None and not pd.isna(interest_val):
+                    interest_val = abs(float(interest_val))
+                    calculated_rd = interest_val / total_debt
+                    if 0.01 <= calculated_rd <= 0.20:
+                        rd = calculated_rd
+            except Exception:
+                pass
+                
+    total_value = market_cap + total_debt
+    if total_value > 0:
+        we = market_cap / total_value
+        wd = total_debt / total_value
+    else:
+        we = 1.0
+        wd = 0.0
+        
+    wacc = we * re + wd * rd * (1 - tax_rate)
+    # Bound WACC logically
+    wacc = max(0.05, min(0.18, wacc))
+    
+    # 8. EVA & MVA
+    eva = nopat - (invested_capital * wacc)
+    mva = market_cap - book_value_equity
+    
+    logger.info(f"Calculated EVA: {eva:,.2f}, MVA: {mva:,.2f} for {ticker_symbol}")
+    return {
+        "eva_native": float(eva),
+        "mva_native": float(mva)
+    }
+
+def calculate_market_phase(history: pd.DataFrame, current_price: float, slope_threshold: float = 0.5, price_buffer: float = 5.0) -> str:
+    """
+    Classifies the stock into one of 4 market phases based on daily closing prices
+    and the 200-period Simple Moving Average (SMA200).
+    Parameterizes the thresholds so they are easily adjustable.
+    """
+    logger.info("Calculating market phase classification")
+    
+    if len(history) < 200:
+        logger.warning("History is too short to calculate SMA200. Defaulting phase to Accumulation.")
+        return "Accumulation"
+        
+    # Calculate SMA200
+    close_prices = history["Close"]
+    sma_200 = close_prices.rolling(window=200).mean()
+    
+    current_sma = float(sma_200.iloc[-1])
+    if pd.isna(current_sma):
+        # Rolling mean might have NaNs if history is short or contains NaNs
+        # Try to calculate SMA manually from available data
+        available_close = close_prices.dropna()
+        if len(available_close) >= 200:
+            current_sma = float(available_close.iloc[-200:].mean())
+        else:
+            current_sma = float(available_close.mean())
+            
+    # Get SMA200 20 days ago
+    sma_20d_ago = current_sma
+    if len(sma_200) >= 20:
+        val = sma_200.iloc[-20]
+        if not pd.isna(val):
+            sma_20d_ago = float(val)
+            
+    # Calculate Slope (Rate of Change) of SMA200 over the last 20 days
+    if sma_20d_ago > 0:
+        slope = ((current_sma - sma_20d_ago) / sma_20d_ago) * 100
+    else:
+        slope = 0.0
+        
+    # Calculate price diff relative to SMA200 in %
+    price_diff_pct = ((current_price - current_sma) / current_sma) * 100
+    
+    logger.info(f"Market Phase inputs - SMA200: {current_sma:.2f}, Slope: {slope:.3f}%, Price Diff: {price_diff_pct:.2f}%")
+    
+    # Check if slope is flat (between -slope_threshold and +slope_threshold)
+    is_flat_slope = -slope_threshold <= slope <= slope_threshold
+    
+    # Check if price is within the buffer of SMA200
+    is_within_buffer = -price_buffer <= price_diff_pct <= price_buffer
+    
+    if is_flat_slope and is_within_buffer:
+        # We need to distinguish Accumulation (occurs after a downtrend)
+        # from Distribution (occurs after an uptrend)
+        # We check the prior trend of the SMA200 (e.g. from 80 days ago to 20 days ago)
+        prior_sma = current_sma
+        if len(sma_200) >= 80:
+            val = sma_200.iloc[-80]
+            if not pd.isna(val):
+                prior_sma = float(val)
+        elif len(sma_200) > 20:
+            val = sma_200.iloc[0]
+            if not pd.isna(val):
+                prior_sma = float(val)
+                
+        if sma_20d_ago < prior_sma:
+            return "Accumulation"
+        else:
+            return "Distribution"
+            
+    elif slope > slope_threshold and current_price > current_sma:
+        return "Uptrend"
+        
+    elif slope < -slope_threshold and current_price < current_sma:
+        return "Downtrend"
+        
+    else:
+        # Graceful fallbacks if we are in transitional states
+        if current_price > current_sma:
+            return "Uptrend" if slope >= 0 else "Accumulation"
+        else:
+            return "Downtrend" if slope <= 0 else "Distribution"
+
 # Simple caching system to avoid hitting Yahoo Finance repeatedly during Streamlit re-runs
 # We cache up to 128 tickers
 @lru_cache(maxsize=128)
@@ -191,6 +470,20 @@ def calculate_metrics(ticker_symbol: str) -> dict:
                 except Exception as ex:
                     logger.debug(f"Could not calculate annual EPS Growth: {str(ex)}")
 
+        # Calculate EVA and MVA metrics dynamically
+        try:
+            eva_mva_results = calculate_eva_mva(ticker, market_cap_native, ticker_symbol)
+        except Exception as ex:
+            logger.error(f"Failed to calculate EVA/MVA for {ticker_symbol}: {str(ex)}")
+            eva_mva_results = {"eva_native": 0.0, "mva_native": 0.0}
+
+        # Calculate 4 Market Phases dynamically
+        try:
+            market_phase = calculate_market_phase(history_full, current_price)
+        except Exception as ex:
+            logger.error(f"Failed to calculate market phase for {ticker_symbol}: {str(ex)}")
+            market_phase = "Accumulation"
+
         # Clean NaNs and make sure defaults are correct
         metrics_dict = {
             "ticker": ticker_symbol,
@@ -206,7 +499,10 @@ def calculate_metrics(ticker_symbol: str) -> dict:
             "sma_200": sma_200 if sma_200 is not None else current_price,
             "is_above_50_sma": is_above_50_sma,
             "is_above_200_sma": is_above_200_sma,
-            "price_return_30d": price_return_30d
+            "price_return_30d": price_return_30d,
+            "eva_native": eva_mva_results["eva_native"],
+            "mva_native": eva_mva_results["mva_native"],
+            "market_phase": market_phase
         }
         
         logger.info(f"Completed metric calculations for {ticker_symbol} in {time.time() - start_time:.4f}s")

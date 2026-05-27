@@ -15,6 +15,9 @@ def test_generate_komar_analysis(mock_client_class, mock_get_secret):
     # Mocking standard structured response JSON
     mock_response.text = (
         '{"stock_category": "CANSLIM Stock", '
+        '"company_brief": "Adani Power is a prominent Indian power utility company.", '
+        '"key_strengths": ["Strong operational capacity", "Favorable regulatory push"], '
+        '"key_weaknesses": ["Coal dependency", "High leverage"], '
         '"fundamental_layer_details": "EPS Growth is 120%, exceeding 40% threshold.", '
         '"story_layer_details": "Adani Power is a leading Indian power generator.", '
         '"sister_stocks_details": "Competitors like Tata Power are also showing strong momentum.", '
@@ -23,7 +26,7 @@ def test_generate_komar_analysis(mock_client_class, mock_get_secret):
         '"rating_breakdown": "- Sales Growth: 2/2\\n- EPS Growth: 2/2\\n- Catalyst: 2/2\\n- Sister Stocks: 1/2\\n- Liquidity: 1/2", '
         '"buying_range": "₹480 - ₹510", '
         '"buying_range_status": "IN BUY ZONE", '
-        '"verdict": "Adani Power is an excellent Julian Komar candidate due to massive growth."}'
+        '"verdict": "Adani Power is an excellent Pratik Patel candidate due to massive growth."}'
     )
     mock_client.models.generate_content.return_value = mock_response
     
@@ -67,6 +70,9 @@ def test_generate_komar_analysis_fallback_on_rate_limit(mock_client_class, mock_
     mock_response = MagicMock()
     mock_response.text = (
         '{"stock_category": "Story Stock", '
+        '"company_brief": "Nvidia is the world leader in AI chips.", '
+        '"key_strengths": ["AI market dominance", "Robust developer ecosystem"], '
+        '"key_weaknesses": ["High valuation", "Supply chain dependency"], '
         '"fundamental_layer_details": "EPS Growth is 80%.", '
         '"story_layer_details": "Nvidia is the AI chips leader.", '
         '"sister_stocks_details": "AMD is also showing strong momentum.", '

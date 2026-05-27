@@ -350,7 +350,7 @@ def get_price_chart(history: pd.DataFrame, ticker: str, price_symbol: str = "$")
 def get_growth_chart(sales_growth: float, eps_growth: float) -> go.Figure:
     """
     Returns a Plotly bar chart comparing the stock's actual growth metrics
-    to Julian Komar's 20% growth entry threshold.
+    to Pratik Patel's 20% growth entry threshold.
     """
     start_time = time.time()
     logger.debug(f"Generating growth comparison Plotly chart for {sales_growth}% Sales, {eps_growth}% EPS")
@@ -385,7 +385,7 @@ def get_growth_chart(sales_growth: float, eps_growth: float) -> go.Figure:
     
     fig.update_layout(
         title=dict(
-            text="<b>Financial Growth vs. Komar's 20% Threshold</b>",
+            text="<b>Financial Growth vs. Patel's 20% Threshold</b>",
             font=dict(color="#f8fafc", size=14)
         ),
         paper_bgcolor="rgba(0,0,0,0)",
