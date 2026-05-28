@@ -41,4 +41,5 @@
 | Execute | Task 8: Replace static header with dynamic stock metrics panel | [x] | Displays stock name, ticker, price, and 52-week boundaries |
 | Execute | Task 9: Integrate Highcharts area & volume chart component | [x] | Substituted Plotly price chart with interactive iframe Highcharts JS chart |
 | Execute | Task 10: Implement premium glassmorphic welcome page before search | [x] | Highlights Pratik Patel's four momentum pillars inside styled dark modules |
+| Execute | Task 11: Remove Pratik Patel Core Rules sidebar section | [x] | Cleans up textual sidebar rules block for cleaner layout |
 | Execute | Verify changes and run test suite | [x] | All 13 tests passed |

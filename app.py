@@ -110,18 +110,6 @@ else:
 
 analyze_btn = st.sidebar.button("Run Analysis")
 
-# Display quick guidelines in the sidebar
-st.sidebar.markdown("""
-<br/><hr style="border-color: rgba(255, 255, 255, 0.08);"/>
-<h5 style="color: #94a3b8; margin-bottom: 0.5rem;">Pratik Patel Core Rules</h5>
-<p style="color: #cbd5e1; font-size: 0.775rem; line-height: 1.4;">
-1. <b>Hyper-Growth Sales</b>: Targets 20%, 30%, or 40%+ YoY Sales. Value stocks are ignored.<br/>
-2. <b>The Story & Theme</b>: Invests in strong catalysts and secular trends (AI, clean energy, SaaS).<br/>
-3. <b>Sister Stocks</b>: Avoids "lonely survivors". Direct competitors must show momentum.<br/>
-4. <b>Institutional Liquidity</b>: Requires $5M-$10M USD/day for young micro-caps; $20M-$100M USD/day for mature names.
-</p>
-""", unsafe_allow_html=True)
-
 # Trigger analysis or retrieve from state to optimize rendering (Streamlit session state)
 if analyze_btn or "metrics" in st.session_state:
     if not api_configured:

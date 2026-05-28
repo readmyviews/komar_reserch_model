@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replaced the Plotly stock price history chart with an advanced Highcharts area and translucent column volume overlay chart, rendered beautifully using Streamlit iframe components.
 - **Premium Glassmorphic Welcome Portal**:
   - Replaced the basic static headers and "Detective is Waiting" instruction card before stock searches with a premium, widescreen glassmorphic welcome page highlighting the four core strategy pillars (Hyper-Growth, Catalysts, Sister Stocks, and Liquidity) of Pratik Patel's framework.
+- **Core Rules Guidelines Sidebar Removal**:
+  - Removed the `"Pratik Patel Core Rules"` textual sidebar guidelines section from `app.py` to deliver a cleaner, more focused Control Center interface.
 
 ### Fixed
 - **Robust yfinance News Parser**:
