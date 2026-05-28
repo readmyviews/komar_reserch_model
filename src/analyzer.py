@@ -84,7 +84,24 @@ TICKER_OVERRIDES = {
     "google": "GOOGL",
     "amazon": "AMZN",
     "meta": "META",
-    "netflix": "NFLX"
+    "netflix": "NFLX",
+    "reliance industries": "RELIANCE.NS",
+    "reliance": "RELIANCE.NS",
+    "tcs": "TCS.NS",
+    "tata consultancy services": "TCS.NS",
+    "infosys": "INFY.NS",
+    "hdfc bank": "HDFCBANK.NS",
+    "hdfc": "HDFCBANK.NS",
+    "icici bank": "ICICIBANK.NS",
+    "icici": "ICICIBANK.NS",
+    "state bank of india": "SBIN.NS",
+    "sbi": "SBIN.NS",
+    "bharti airtel": "BHARTIALRT.NS",
+    "airtel": "BHARTIALRT.NS",
+    "itc": "ITC.NS",
+    "larsen & toubro": "LT.NS",
+    "l&t": "LT.NS",
+    "coal india": "COALINDIA.NS"
 }
 
 def resolve_ticker(name: str, country: str) -> str:

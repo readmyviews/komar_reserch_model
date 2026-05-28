@@ -91,8 +91,67 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-stock_name = st.sidebar.text_input("Stock Name or Ticker Symbol:", value="Adani Power", help="e.g. Adani Power, Nvidia, TSLA, Tata Power")
-country = st.sidebar.radio("Country/Listing Region:", options=["India", "US"], index=0, help="India utilizes NSE (.NS suffix); US utilizes Nasdaq/NYSE")
+# pre-defined search options for high-fidelity auto-complete
+autocomplete_options = [
+    "Adani Power",
+    "Tata Power",
+    "Nvidia",
+    "Tesla",
+    "Apple",
+    "Microsoft",
+    "Google",
+    "Amazon",
+    "Meta",
+    "Netflix",
+    "Reliance Industries",
+    "TCS",
+    "Infosys",
+    "HDFC Bank",
+    "ICICI Bank",
+    "State Bank of India",
+    "Bharti Airtel",
+    "ITC",
+    "Larsen & Toubro",
+    "Coal India",
+    "Custom Stock Ticker..."
+]
+
+INDIAN_STOCKS = {
+    "Adani Power", "Tata Power", "Reliance Industries", "TCS", "Infosys",
+    "HDFC Bank", "ICICI Bank", "State Bank of India", "Bharti Airtel", "ITC",
+    "Larsen & Toubro", "Coal India"
+}
+
+selected_stock = st.sidebar.selectbox(
+    "Search Stock Name (Autocomplete):",
+    options=autocomplete_options,
+    index=0,
+    help="Start typing to search or autocomplete popular stocks."
+)
+
+if selected_stock == "Custom Stock Ticker...":
+    stock_name = st.sidebar.text_input(
+        "Enter Custom Ticker / Name:",
+        value="",
+        help="Type any valid stock ticker symbol (e.g. INFY.NS, AMD, TSLA)"
+    )
+else:
+    stock_name = selected_stock
+
+# Determine default country index based on selected stock
+if selected_stock in INDIAN_STOCKS:
+    default_country_idx = 0  # India
+elif selected_stock == "Custom Stock Ticker...":
+    default_country_idx = 0  # Default to India
+else:
+    default_country_idx = 1  # US
+
+country = st.sidebar.radio(
+    "Country/Listing Region:",
+    options=["India", "US"],
+    index=default_country_idx,
+    help="India utilizes NSE (.NS suffix); US utilizes Nasdaq/NYSE"
+)
 
 st.sidebar.markdown("<br/>", unsafe_allow_html=True)
 
