@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] - 2026-05-28
+
+### Changed
+- **30-Day Calendar Lookback Refactoring**:
+  - Re-verified and optimized the `"30-Day Performance"` calculation logic in the backend (`src/analyzer.py`). Replaced the static 30 trading days lookback slice (`iloc[-30]`) with exactly 30 calendar days lookback utilizing `pd.Timedelta(days=30)` and nearest DatetimeIndex alignment.
+- **UI Metrics Card Removal & Grid Re-Alignment**:
+  - Removed the `"30-DAY PERFORMANCE"` metrics card from Row 1 of the glassmorphic cards in `app.py`.
+  - Re-aligned the Row 1 grid layout to exactly 4 symmetric columns (`col1`, `col2`, `col3`, `col4`) for a perfectly balanced visual representation.
+- **Gemini Sidebar Success Message Cleanup**:
+  - Removed the `"🔑 Gemini API Key configured."` sidebar success notification from `app.py` for a cleaner sidebar interface.
+
 ## [1.1.0] - 2026-05-27
 
 ### Added

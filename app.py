@@ -75,7 +75,6 @@ if not gemini_api_key:
     st.sidebar.error("⚠️ GEMINI_API_KEY is missing! Add it to .streamlit/secrets.toml or your .env file to enable qualitative reasoning.")
     api_configured = False
 else:
-    st.sidebar.success("🔑 Gemini API Key configured.")
     api_configured = True
 
 analyze_btn = st.sidebar.button("Run Analysis")
@@ -224,7 +223,7 @@ if "analysis" in st.session_state:
     # ------------------ Row 1: Glassmorphic Metrics Summary Cards (Row 1) ------------------
     price_symbol = "₹" if country == "India" else "$"
     
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4 = st.columns(4)
     
     # 1. Price card
     with col1:
@@ -278,22 +277,9 @@ if "analysis" in st.session_state:
         </div>
         """, unsafe_allow_html=True)
         
-    # 4. 30-Day Return card
-    ret_30d = stats.get('price_return_30d', 0.0)
-    ret_class = "status-positive" if ret_30d >= 0 else "status-negative"
-    ret_sign = "+" if ret_30d >= 0 else ""
-    with col4:
-        st.markdown(f"""
-        <div class="komar-card">
-            <div class="komar-metric-title">30-DAY PERFORMANCE</div>
-            <div class="komar-metric-value {ret_class}">{ret_sign}{ret_30d:.1f}%</div>
-            <div class="komar-metric-status">Price Momentum</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    # 5. Rating Card (out of 10)
+    # 4. Rating Card (out of 10)
     stars_html = render_rating_stars(analysis['rating'])
-    with col5:
+    with col4:
         st.markdown(f"""
         <div class="komar-card">
             <div class="komar-metric-title">PATEL RATING</div>

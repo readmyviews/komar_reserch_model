@@ -391,12 +391,18 @@ def calculate_metrics(ticker_symbol: str) -> dict:
             sma_200 = float(history_full["Close"].iloc[-200:].mean())
             is_above_200_sma = current_price > sma_200
             
-        # Compute 30-day Price Performance / Return
+        # Compute 30-day Price Performance / Return (exactly 30 calendar days lookback aligned to nearest trading day)
         price_return_30d = 0.0
-        if len(history_full) >= 30:
-            price_30d_ago = float(history_full["Close"].iloc[-30])
-            if price_30d_ago > 0:
-                price_return_30d = float(((current_price - price_30d_ago) / price_30d_ago) * 100)
+        if not history_full.empty:
+            latest_date = history_full.index[-1]
+            first_date = history_full.index[0]
+            if (latest_date - first_date).days >= 30:
+                target_date = latest_date - pd.Timedelta(days=30)
+                closest_idx = history_full.index.get_indexer([target_date], method="nearest")[0]
+                if closest_idx != -1:
+                    price_30d_ago = float(history_full["Close"].iloc[closest_idx])
+                    if price_30d_ago > 0:
+                        price_return_30d = float(((current_price - price_30d_ago) / price_30d_ago) * 100)
         
         logger.info(f"Successfully calculated liquidity and technical indicators for {ticker_symbol}.")
 
