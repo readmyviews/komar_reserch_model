@@ -43,3 +43,9 @@
 | Execute | Task 10: Implement premium glassmorphic welcome page before search | [x] | Highlights Pratik Patel's four momentum pillars inside styled dark modules |
 | Execute | Task 11: Remove Pratik Patel Core Rules sidebar section | [x] | Cleans up textual sidebar rules block for cleaner layout |
 | Execute | Verify changes and run test suite | [x] | All 13 tests passed |
+| Execute | Add statistics: 5Y lookback, calendar returns, growth metrics | [x] | Task 1: yfinance history extension and return helpers |
+| Execute | Add statistics: Implement reviewer engine logic | [x] | Task 2: Backend evaluation function & thresholds |
+| Execute | Add statistics: Render widescreen stock summary card in app.py | [ ] | Task 3: Name, Price, 52W High, 52W Low above Company Profile |
+| Execute | Add statistics: Render Historical & Growth Metrics in app.py | [ ] | Task 4: Color-coded verdict & two-column details grid |
+| Execute | Add statistics: Verify and run unit test suite | [ ] | Final test verification |
+

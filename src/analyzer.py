@@ -12,6 +12,65 @@ logging.basicConfig(
 )
 logger = logging.getLogger("komar.analyzer")
 
+def _calculate_calendar_return(history: pd.DataFrame, latest_date: pd.Timestamp, days_ago: int) -> float:
+    """
+    Computes percentage return over the specified number of calendar days ago,
+    aligning to the nearest trading day.
+    """
+    if history.empty:
+        return None
+    first_date = history.index[0]
+    if (latest_date - first_date).days >= days_ago:
+        target_date = latest_date - pd.Timedelta(days=days_ago)
+        idx = history.index.get_indexer([target_date], method="nearest")[0]
+        if idx != -1:
+            price_then = float(history["Close"].iloc[idx])
+            if price_then > 0:
+                current_price = float(history["Close"].iloc[-1])
+                return float(((current_price - price_then) / price_then) * 100.0)
+    return None
+
+def evaluate_performance_growth(sales_growth: float, revenue_growth: float, net_profit: float, return_1y: float) -> str:
+    """
+    Evaluates historical performance and growth numbers against baselines
+    to return a final verdict: 'Good', 'Average', or 'Bad'.
+    """
+    score = 0
+    # 1. Sales Growth YoY baseline (Healthy: 20%, Moderate: 10%)
+    if sales_growth >= 20.0:
+        score += 2
+    elif sales_growth >= 10.0:
+        score += 1
+        
+    # 2. Revenue Growth YoY baseline (Healthy: 20%, Moderate: 10%)
+    if revenue_growth >= 20.0:
+        score += 2
+    elif revenue_growth >= 10.0:
+        score += 1
+        
+    # 3. Net Profit Margin baseline (Healthy: 15%, Moderate: 8%)
+    if net_profit >= 15.0:
+        score += 2
+    elif net_profit >= 8.0:
+        score += 1
+        
+    # 4. 1-Year Return baseline (Healthy: 15%, Moderate: 0%)
+    if return_1y is not None:
+        if return_1y >= 15.0:
+            score += 2
+        elif return_1y >= 0.0:
+            score += 1
+    else:
+        score += 1  # Moderate credit if unavailable (e.g. IPO)
+        
+    if score >= 6:
+        return "Good"
+    elif score >= 3:
+        return "Average"
+    else:
+        return "Bad"
+
+
 # Direct overrides mapping stock names/common names to ticker symbols
 TICKER_OVERRIDES = {
     "adani power": "ADANIPOWER.NS",
@@ -357,9 +416,9 @@ def calculate_metrics(ticker_symbol: str) -> dict:
     try:
         ticker = yf.Ticker(ticker_symbol)
         
-        # --- 1. Fetch Price History & Technical Indicators (last 250 trading days) ---
-        logger.debug(f"Fetching 250d history for {ticker_symbol}")
-        history_full = ticker.history(period="250d")
+        # --- 1. Fetch Price History & Technical Indicators (last 5 years) ---
+        logger.debug(f"Fetching 5y history for {ticker_symbol}")
+        history_full = ticker.history(period="5y")
         if history_full.empty:
             logger.error(f"yfinance returned empty price history for {ticker_symbol}")
             raise ValueError(f"Could not fetch historical data for ticker '{ticker_symbol}'")
@@ -391,18 +450,22 @@ def calculate_metrics(ticker_symbol: str) -> dict:
             sma_200 = float(history_full["Close"].iloc[-200:].mean())
             is_above_200_sma = current_price > sma_200
             
-        # Compute 30-day Price Performance / Return (exactly 30 calendar days lookback aligned to nearest trading day)
+        # Compute multi-horizon calendar returns (exactly 30/90/180/365/1825 calendar days nearest aligned)
         price_return_30d = 0.0
+        return_1m = None
+        return_3m = None
+        return_6m = None
+        return_1y = None
+        return_5y = None
         if not history_full.empty:
             latest_date = history_full.index[-1]
-            first_date = history_full.index[0]
-            if (latest_date - first_date).days >= 30:
-                target_date = latest_date - pd.Timedelta(days=30)
-                closest_idx = history_full.index.get_indexer([target_date], method="nearest")[0]
-                if closest_idx != -1:
-                    price_30d_ago = float(history_full["Close"].iloc[closest_idx])
-                    if price_30d_ago > 0:
-                        price_return_30d = float(((current_price - price_30d_ago) / price_30d_ago) * 100)
+            return_1m = _calculate_calendar_return(history_full, latest_date, 30)
+            return_3m = _calculate_calendar_return(history_full, latest_date, 90)
+            return_6m = _calculate_calendar_return(history_full, latest_date, 180)
+            return_1y = _calculate_calendar_return(history_full, latest_date, 365)
+            return_5y = _calculate_calendar_return(history_full, latest_date, 1825)
+            if return_1m is not None:
+                price_return_30d = return_1m
         
         logger.info(f"Successfully calculated liquidity and technical indicators for {ticker_symbol}.")
 
@@ -579,6 +642,54 @@ def calculate_metrics(ticker_symbol: str) -> dict:
             logger.error(f"Failed to calculate market phase for {ticker_symbol}: {str(ex)}")
             market_phase = "Accumulation"
 
+        # Fetch Revenue Growth
+        revenue_growth = 0.0
+        try:
+            revenue_growth_val = ticker.info.get("revenueGrowth")
+            if revenue_growth_val is not None:
+                revenue_growth = float(revenue_growth_val) * 100.0
+        except Exception:
+            pass
+        if not revenue_growth or revenue_growth == 0.0:
+            revenue_growth = float(sales_growth_yoy) if sales_growth_yoy is not None and not np.isnan(sales_growth_yoy) else 0.0
+
+        # Fetch Net Profit Margin
+        net_profit_margin = 0.0
+        try:
+            profit_margins_val = ticker.info.get("profitMargins")
+            if profit_margins_val is not None:
+                net_profit_margin = float(profit_margins_val) * 100.0
+        except Exception:
+            pass
+        if not net_profit_margin or net_profit_margin == 0.0:
+            try:
+                if quarterly_financials is not None and not quarterly_financials.empty:
+                    idx_lower = [str(x).lower().strip() for x in quarterly_financials.index]
+                    net_income = None
+                    revenue = None
+                    if "net income" in idx_lower:
+                        match_idx = idx_lower.index("net income")
+                        net_income = quarterly_financials.iloc[match_idx].iloc[0]
+                    if "total revenue" in idx_lower:
+                        match_idx = idx_lower.index("total revenue")
+                        revenue = quarterly_financials.iloc[match_idx].iloc[0]
+                    
+                    if net_income is not None and revenue is not None and revenue > 0:
+                        net_profit_margin = (float(net_income) / float(revenue)) * 100.0
+            except Exception:
+                pass
+        if not net_profit_margin or net_profit_margin == 0.0:
+            net_profit_margin = 10.0  # Fallback baseline
+
+        # Evaluate performance & growth automated verdict
+        sales_growth_pct = float(sales_growth_yoy) if sales_growth_yoy is not None and not np.isnan(sales_growth_yoy) else 0.0
+        performance_verdict = evaluate_performance_growth(
+            sales_growth_pct,
+            revenue_growth,
+            net_profit_margin,
+            return_1y
+        )
+
         # Clean NaNs and make sure defaults are correct
         metrics_dict = {
             "ticker": ticker_symbol,
@@ -586,7 +697,7 @@ def calculate_metrics(ticker_symbol: str) -> dict:
             "recent_volume": recent_volume,
             "avg_daily_dollar_volume": avg_daily_dollar_volume,
             "avg_daily_volume_native": avg_daily_volume_native,
-            "sales_growth_yoy": float(sales_growth_yoy) if sales_growth_yoy is not None and not np.isnan(sales_growth_yoy) else 0.0,
+            "sales_growth_yoy": sales_growth_pct,
             "eps_growth_yoy": float(eps_growth_yoy) if eps_growth_yoy is not None and not np.isnan(eps_growth_yoy) else 0.0,
             "market_cap": market_cap_native,
             "market_cap_usd": market_cap_usd,
@@ -595,6 +706,14 @@ def calculate_metrics(ticker_symbol: str) -> dict:
             "is_above_50_sma": is_above_50_sma,
             "is_above_200_sma": is_above_200_sma,
             "price_return_30d": price_return_30d,
+            "return_1m": return_1m,
+            "return_3m": return_3m,
+            "return_6m": return_6m,
+            "return_1y": return_1y,
+            "return_5y": return_5y,
+            "revenue_growth": revenue_growth,
+            "net_profit_margin": net_profit_margin,
+            "performance_verdict": performance_verdict,
             "eva_native": eva_mva_results["eva_native"],
             "mva_native": eva_mva_results["mva_native"],
             "market_phase": market_phase,

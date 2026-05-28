@@ -29,3 +29,16 @@ def test_calculate_metrics():
     assert "mva_native" in metrics
     assert "market_phase" in metrics
     assert metrics["market_phase"] in ["Accumulation", "Uptrend", "Distribution", "Downtrend"]
+
+def test_extended_metrics():
+    metrics = calculate_metrics("NVDA")
+    assert "return_1m" in metrics
+    assert "return_3m" in metrics
+    assert "return_6m" in metrics
+    assert "return_1y" in metrics
+    assert "return_5y" in metrics
+    assert "revenue_growth" in metrics
+    assert "net_profit_margin" in metrics
+    assert "performance_verdict" in metrics
+    assert metrics["performance_verdict"] in ["Good", "Average", "Bad"]
+

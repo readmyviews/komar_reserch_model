@@ -82,3 +82,18 @@ def test_calculate_market_phase_downtrend():
     
     phase = calculate_market_phase(history, current_price, slope_threshold=0.1, price_buffer=2.0)
     assert phase == "Downtrend"
+
+def test_evaluate_performance_growth():
+    from src.analyzer import evaluate_performance_growth
+    # Good score scenario (needs score >= 6)
+    # sales_growth=25 (+2), revenue_growth=25 (+2), net_profit=18 (+2), return_1y=20 (+2) = 8
+    assert evaluate_performance_growth(25.0, 25.0, 18.0, 20.0) == "Good"
+    
+    # Average score scenario (score >= 3)
+    # sales_growth=12 (+1), revenue_growth=12 (+1), net_profit=9 (+1), return_1y=5 (+1) = 4
+    assert evaluate_performance_growth(12.0, 12.0, 9.0, 5.0) == "Average"
+    
+    # Bad score scenario (score < 3)
+    # sales_growth=2 (0), revenue_growth=2 (0), net_profit=3 (0), return_1y=-10 (0) = 0
+    assert evaluate_performance_growth(2.0, 2.0, 3.0, -10.0) == "Bad"
+
