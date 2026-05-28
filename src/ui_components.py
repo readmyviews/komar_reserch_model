@@ -101,7 +101,7 @@ def get_glassmorphic_css() -> str:
         transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
     }
     div[data-testid="stTextInput"] input {
-        background-color: transparent !important;
+        background-color: #1e222d !important;
         color: #f8fafc !important;
         font-size: 0.95rem !important;
         padding: 0.5rem 0.75rem !important;

@@ -170,43 +170,7 @@ if "analysis" in st.session_state:
     analysis = st.session_state["analysis"]
     history = st.session_state["history"]
     resolved_ticker = st.session_state["resolved_ticker"]
-    
     # ------------------ Company Overview & News Section (Top of UI) ------------------
-    # Task 1: Stock Details Card (Widescreen header card before Company Profile)
-    price_symbol = "₹" if st.session_state.get("last_search_country", "India") == "India" else "$"
-    high_52w = stats.get("fifty_two_week_high", 0.0)
-    low_52w = stats.get("fifty_two_week_low", 0.0)
-    
-    header_html = f"""
-    <div class="komar-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <div>
-                <h3 style="color: #3b82f6; margin: 0; font-size: 1.45rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
-                    🏢 {st.session_state.get('last_search_name', '').upper()} <span style="font-size: 0.95rem; color: #64748b; font-weight: 600;">({stats['ticker']})</span>
-                </h3>
-            </div>
-            <div style="display: flex; gap: 1.5rem; align-items: center;">
-                <div>
-                    <span style="color: #64748b; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 0.1rem;">Current Price</span>
-                    <span style="color: #ffffff; font-size: 1.35rem; font-weight: 800;">{price_symbol}{stats['current_price']:.2f}</span>
-                </div>
-                <div style="width: 1px; height: 25px; background: rgba(255,255,255,0.08);"></div>
-                <div>
-                    <span style="color: #10b981; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 0.1rem;">52W High</span>
-                    <span style="color: #10b981; font-size: 1.35rem; font-weight: 700;">{price_symbol}{high_52w:.2f}</span>
-                </div>
-                <div style="width: 1px; height: 25px; background: rgba(255,255,255,0.08);"></div>
-                <div>
-                    <span style="color: #f43f5e; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 0.1rem;">52W Low</span>
-                    <span style="color: #f43f5e; font-size: 1.35rem; font-weight: 700;">{price_symbol}{low_52w:.2f}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    """
-    header_html_flat = "\n".join(line.strip() for line in header_html.split("\n"))
-    st.markdown(header_html_flat, unsafe_allow_html=True)
-
     col_overview, col_news = st.columns([2, 1])
     
     with col_overview:
