@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replaced the static `"Patel Stock Detective"` header with an elegant, dynamic header component displaying the resolved stock name, ticker symbol, current price, and 52-week highest and lowest prices when a search is active.
 - **Highcharts Integration for Stock Charting**:
   - Replaced the Plotly stock price history chart with an advanced Highcharts area and translucent column volume overlay chart, rendered beautifully using Streamlit iframe components.
+- **Premium Glassmorphic Welcome Portal**:
+  - Replaced the basic static headers and "Detective is Waiting" instruction card before stock searches with a premium, widescreen glassmorphic welcome page highlighting the four core strategy pillars (Hyper-Growth, Catalysts, Sister Stocks, and Liquidity) of Pratik Patel's framework.
 
 ### Fixed
 - **Robust yfinance News Parser**:

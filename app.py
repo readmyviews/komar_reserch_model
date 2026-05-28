@@ -39,17 +39,7 @@ st.set_page_config(
 st.markdown(get_glassmorphic_css(), unsafe_allow_html=True)
 
 # Main Application Title Header
-if "analysis" not in st.session_state:
-    st.markdown("""
-    <div style="text-align: center; margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-        <h1 style="color: #3b82f6; margin-bottom: 0.5rem; font-size: 2.75rem; text-shadow: 0 0 10px rgba(59, 130, 246, 0.25);">🔍 Patel Stock Detective</h1>
-        <p style="color: #94a3b8; font-size: 1.05rem; max-width: 800px; margin: 0 auto; line-height: 1.5;">
-            Apply seasoned growth investor <b>Pratik Patel's</b> specific fundamental, thematic, and institutional liquidity 
-            research framework to Indian and US equities. Powered by live Yahoo Finance datasets and Gemini AI.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-else:
+if "analysis" in st.session_state:
     stats = st.session_state["stats"]
     price_symbol = "₹" if st.session_state["last_search_country"] == "India" else "$"
     high_52w = stats.get("fifty_two_week_high", 0.0)
@@ -524,13 +514,74 @@ if "analysis" in st.session_state:
             "Trend Status": ["Base Reference", sma50_icon, sma200_icon]
         }))
 else:
-    # Warm welcome instruction box
+    # Highly attractive, premium glassmorphic momentum strategy welcome page
     st.markdown("""
-    <div style="padding: 2.5rem; background: rgba(30, 41, 59, 0.4); border-radius: 12px; border: 1px dashed rgba(255, 255, 255, 0.08); text-align: center; margin-top: 1rem;">
-        <h4 style="color: #94a3b8; margin-bottom: 0.5rem;">🕵️‍♂️ The Detective is Waiting...</h4>
-        <p style="color: #cbd5e1; font-size: 0.95rem; max-width: 600px; margin: 0 auto;">
-            Configure the stock name and country listing region in the <b>Control Center</b> sidebar, 
-            then click <b>Run Analysis</b> to fetch real-time analytics and launch our qualitative Gemini agent.
-        </p>
+    <div style="margin-top: 1rem; font-family: 'Outfit', sans-serif;">
+        <!-- Large beautiful glassmorphic welcome card -->
+        <div style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1px solid rgba(59, 130, 246, 0.15); border-radius: 16px; padding: 2.5rem; text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); margin-bottom: 2rem;">
+            <h1 style="color: #3b82f6; margin-bottom: 0.5rem; font-size: 3rem; font-weight: 800; text-shadow: 0 0 15px rgba(59, 130, 246, 0.3);">🔍 PATEL STOCK DETECTIVE</h1>
+            <p style="color: #cbd5e1; font-size: 1.15rem; max-width: 750px; margin: 0 auto; line-height: 1.6; font-weight: 400;">
+                Apply seasoned growth investor <b>Pratik Patel's</b> rigorous, institutional-grade 
+                fundamental and thematic momentum research framework. Powered by live datasets and GenAI.
+            </p>
+        </div>
+        
+        <!-- Strategy Grid Section Title -->
+        <h3 style="color: #ffffff; text-align: center; margin-bottom: 1.5rem; font-weight: 700; font-size: 1.4rem; text-transform: uppercase; letter-spacing: 0.05em;">
+            🛡️ Core Pillars of Patel's Momentum Strategy
+        </h3>
+        
+        <!-- 2x2 Grid using clean flex/columns container -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+            
+            <!-- Pillar 1: Hyper Growth -->
+            <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: 12px;">
+                <div style="color: #3b82f6; font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    ⚡ <span>Hyper-Growth Fundamentals</span>
+                </div>
+                <p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.5; margin: 0;">
+                    Targets companies with explosive <b>sales growth of 20%, 30%, or 40%+ YoY</b>. High-growth value-creation metrics (EVA/MVA) are prioritized over standard PE values.
+                </p>
+            </div>
+
+            <!-- Pillar 2: Thematic Catalysts -->
+            <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: 12px;">
+                <div style="color: #10b981; font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    🔮 <span>Secular Catalysts & Story</span>
+                </div>
+                <p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.5; margin: 0;">
+                    Focuses on strong qualitative trends, technological innovations, and powerful tailwinds (e.g. Artificial Intelligence, SaaS, clean energy, national infrastructure).
+                </p>
+            </div>
+
+            <!-- Pillar 3: Sister Stocks -->
+            <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: 12px;">
+                <div style="color: #eab308; font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    👯 <span>Sister Stocks & Theme</span>
+                </div>
+                <p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.5; margin: 0;">
+                    Avoids isolated success stories. Requires other industry competitors and sector themes to also display strong fundamental and technical price action.
+                </p>
+            </div>
+
+            <!-- Pillar 4: Institutional Liquidity -->
+            <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: 12px;">
+                <div style="color: #f43f5e; font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    💧 <span>Institutional Liquidity</span>
+                </div>
+                <p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.5; margin: 0;">
+                    Ensures safe entries and exits for institutions by enforcing strict Average Daily Dollar Volume thresholds ($5M-$10M USD for micro-caps, $20M-$100M+ USD for mature themes).
+                </p>
+            </div>
+            
+        </div>
+
+        <!-- Active Call to Action Section -->
+        <div style="background: rgba(59, 130, 246, 0.04); border: 1px dashed rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 1.5rem; text-align: center; max-width: 680px; margin: 0 auto;">
+            <h4 style="color: #3b82f6; margin-top: 0; margin-bottom: 0.35rem; font-weight: 700; font-size: 1.1rem; text-transform: uppercase;">🕵️‍♂️ The Detective is Ready</h4>
+            <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0; line-height: 1.525;">
+                Configure your stock name and country region in the <b>Control Center</b> sidebar on the left, then click the blue <b>Run Analysis</b> button to fetch live data and start the AI Detective audit!
+            </p>
+        </div>
     </div>
     """, unsafe_allow_html=True)
