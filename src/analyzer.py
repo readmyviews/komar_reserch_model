@@ -535,6 +535,36 @@ def calculate_metrics(ticker_symbol: str) -> dict:
                 except Exception as ex:
                     logger.debug(f"Could not calculate annual EPS Growth: {str(ex)}")
 
+        # Fetch 52-week High and Low
+        fifty_two_week_high = 0.0
+        fifty_two_week_low = 0.0
+        try:
+            fifty_two_week_high = float(ticker.info.get("fiftyTwoWeekHigh") or 0.0)
+            fifty_two_week_low = float(ticker.info.get("fiftyTwoWeekLow") or 0.0)
+        except Exception:
+            pass
+
+        if fifty_two_week_high == 0.0 or fifty_two_week_low == 0.0:
+            try:
+                fast_info = getattr(ticker, "fast_info", None)
+                if fast_info is not None:
+                    if hasattr(fast_info, "year_high"):
+                        fifty_two_week_high = float(fast_info.year_high)
+                    elif hasattr(fast_info, "get"):
+                        fifty_two_week_high = float(fast_info.get("year_high") or fast_info.get("yearHigh") or 0.0)
+                        
+                    if hasattr(fast_info, "year_low"):
+                        fifty_two_week_low = float(fast_info.year_low)
+                    elif hasattr(fast_info, "get"):
+                        fifty_two_week_low = float(fast_info.get("year_low") or fast_info.get("yearLow") or 0.0)
+            except Exception:
+                pass
+
+        if fifty_two_week_high == 0.0 or fifty_two_week_low == 0.0:
+            if not history_full.empty:
+                fifty_two_week_high = float(history_full["Close"].max())
+                fifty_two_week_low = float(history_full["Close"].min())
+
         # Calculate EVA and MVA metrics dynamically
         try:
             eva_mva_results = calculate_eva_mva(ticker, market_cap_native, ticker_symbol)
@@ -567,7 +597,9 @@ def calculate_metrics(ticker_symbol: str) -> dict:
             "price_return_30d": price_return_30d,
             "eva_native": eva_mva_results["eva_native"],
             "mva_native": eva_mva_results["mva_native"],
-            "market_phase": market_phase
+            "market_phase": market_phase,
+            "fifty_two_week_high": fifty_two_week_high,
+            "fifty_two_week_low": fifty_two_week_low
         }
         
         logger.info(f"Completed metric calculations for {ticker_symbol} in {time.time() - start_time:.4f}s")

@@ -7,13 +7,15 @@ import os
 import logging
 import time
 
+import streamlit.components.v1 as components
 from src.analyzer import resolve_ticker, calculate_metrics
 from src.agent import generate_komar_analysis
 from src.ui_components import (
     get_glassmorphic_css, 
     get_price_chart, 
     get_growth_chart, 
-    render_rating_stars
+    render_rating_stars,
+    get_highcharts_html
 )
 
 load_dotenv()
@@ -37,15 +39,53 @@ st.set_page_config(
 st.markdown(get_glassmorphic_css(), unsafe_allow_html=True)
 
 # Main Application Title Header
-st.markdown("""
-<div style="text-align: center; margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-    <h1 style="color: #3b82f6; margin-bottom: 0.5rem; font-size: 2.75rem; text-shadow: 0 0 10px rgba(59, 130, 246, 0.25);">🔍 Patel Stock Detective</h1>
-    <p style="color: #94a3b8; font-size: 1.05rem; max-width: 800px; margin: 0 auto; line-height: 1.5;">
-        Apply seasoned growth investor <b>Pratik Patel's</b> specific fundamental, thematic, and institutional liquidity 
-        research framework to Indian and US equities. Powered by live Yahoo Finance datasets and Gemini AI.
-    </p>
-</div>
-""", unsafe_allow_html=True)
+if "analysis" not in st.session_state:
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+        <h1 style="color: #3b82f6; margin-bottom: 0.5rem; font-size: 2.75rem; text-shadow: 0 0 10px rgba(59, 130, 246, 0.25);">🔍 Patel Stock Detective</h1>
+        <p style="color: #94a3b8; font-size: 1.05rem; max-width: 800px; margin: 0 auto; line-height: 1.5;">
+            Apply seasoned growth investor <b>Pratik Patel's</b> specific fundamental, thematic, and institutional liquidity 
+            research framework to Indian and US equities. Powered by live Yahoo Finance datasets and Gemini AI.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    stats = st.session_state["stats"]
+    price_symbol = "₹" if st.session_state["last_search_country"] == "India" else "$"
+    high_52w = stats.get("fifty_two_week_high", 0.0)
+    low_52w = stats.get("fifty_two_week_low", 0.0)
+    
+    st.markdown(f"""
+    <div style="margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h1 style="color: #ffffff; margin: 0; font-size: 2.4rem; font-weight: 800; letter-spacing: -0.02em; display: flex; align-items: center; gap: 0.5rem;">
+                    📈 <span style="background: linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{st.session_state["last_search_name"].upper()}</span> 
+                    <span style="font-size: 1.1rem; color: #3b82f6; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); padding: 0.25rem 0.6rem; border-radius: 6px; font-weight: 600;">{stats['ticker']}</span>
+                </h1>
+                <p style="color: #64748b; margin: 0.25rem 0 0 0; font-size: 0.95rem; font-weight: 500;">
+                    Real-Time Market Analytics & Strategic Detective Intelligence
+                </p>
+            </div>
+            <div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;">
+                <div style="text-align: right;">
+                    <div style="color: #64748b; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">Current Price</div>
+                    <div style="color: #3b82f6; font-size: 1.85rem; font-weight: 800; text-shadow: 0 0 10px rgba(59, 130, 246, 0.15);">{price_symbol}{stats['current_price']:.2f}</div>
+                </div>
+                <div style="width: 1px; height: 35px; background: rgba(255,255,255,0.08);"></div>
+                <div style="text-align: right;">
+                    <div style="color: #10b981; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">52W Highest</div>
+                    <div style="color: #10b981; font-size: 1.5rem; font-weight: 700;">{price_symbol}{high_52w:.2f}</div>
+                </div>
+                <div style="width: 1px; height: 35px; background: rgba(255,255,255,0.08);"></div>
+                <div style="text-align: right;">
+                    <div style="color: #f43f5e; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">52W Lowest</div>
+                    <div style="color: #f43f5e; font-size: 1.5rem; font-weight: 700;">{price_symbol}{low_52w:.2f}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Sidebar configurations
 st.sidebar.markdown("""
@@ -424,7 +464,7 @@ if "analysis" in st.session_state:
     # ------------------ Row 3: Charts and Visualizations ------------------
     chart_col1, chart_col2 = st.columns([2, 1])
     with chart_col1:
-        st.plotly_chart(get_price_chart(history, resolved_ticker, price_symbol), width="stretch")
+        components.html(get_highcharts_html(history, resolved_ticker, price_symbol), height=390)
     with chart_col2:
         st.plotly_chart(get_growth_chart(stats['sales_growth_yoy'], stats['eps_growth_yoy']), width="stretch")
         

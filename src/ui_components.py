@@ -412,3 +412,181 @@ def render_rating_stars(rating: int) -> str:
         else:
             stars += '<span class="star-empty">☆</span>'
     return stars
+
+def get_highcharts_html(history: pd.DataFrame, ticker: str, price_symbol: str = "$") -> str:
+    """
+    Returns an HTML string that renders a beautiful Highcharts area chart with
+    volume bars overlaid, optimized for our dark theme.
+    """
+    import json
+    dates = [d.strftime("%Y-%m-%d") if hasattr(d, "strftime") else str(d) for d in history.index]
+    prices = [float(p) for p in history["Close"]]
+    volumes = [int(v) for v in history["Volume"]]
+    
+    dates_json = json.dumps(dates)
+    prices_json = json.dumps(prices)
+    volumes_json = json.dumps(volumes)
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="https://code.highcharts.com/highcharts.js"></script>
+        <style>
+            body {{
+                background-color: transparent;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+                font-family: 'Outfit', sans-serif;
+            }}
+            #container {{
+                width: 100%;
+                height: 380px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div id="container"></div>
+        <script>
+            const dates = {dates_json};
+            const prices = {prices_json};
+            const volumes = {volumes_json};
+            const ticker = "{ticker}";
+            const priceSymbol = "{price_symbol}";
+
+            Highcharts.chart('container', {{
+                chart: {{
+                    backgroundColor: 'rgba(0,0,0,0)',
+                    type: 'area',
+                    height: 380,
+                    marginRight: 60,
+                    marginLeft: 60,
+                    style: {{
+                        fontFamily: 'Outfit, sans-serif'
+                    }}
+                }},
+                title: {{
+                    text: '<b>' + ticker + ' Price & Volume Performance (Last 30 Trading Days)</b>',
+                    align: 'left',
+                    style: {{
+                        color: '#f8fafc',
+                        fontSize: '15px',
+                        fontWeight: 'bold'
+                    }}
+                }},
+                credits: {{
+                    enabled: false
+                }},
+                xAxis: {{
+                    categories: dates,
+                    gridLineColor: 'rgba(255, 255, 255, 0.02)',
+                    gridLineWidth: 1,
+                    labels: {{
+                        style: {{
+                            color: '#64748b',
+                            fontSize: '10px'
+                        }}
+                    }},
+                    lineColor: 'rgba(255,255,255,0.05)',
+                    tickColor: 'rgba(255,255,255,0.05)'
+                }},
+                yAxis: [{{
+                    title: {{
+                        text: 'Price (' + priceSymbol + ')',
+                        style: {{
+                            color: '#3b82f6',
+                            fontSize: '11px',
+                            fontWeight: '600'
+                        }}
+                    }},
+                    gridLineColor: 'rgba(255, 255, 255, 0.02)',
+                    labels: {{
+                        style: {{
+                            color: '#3b82f6'
+                        }}
+                    }}
+                }}, {{
+                    title: {{
+                        text: 'Volume',
+                        style: {{
+                            color: '#64748b',
+                            fontSize: '11px',
+                            fontWeight: '600'
+                        }}
+                    }},
+                    gridLineWidth: 0,
+                    labels: {{
+                        style: {{
+                            color: '#64748b'
+                        }}
+                    }},
+                    opposite: true
+                }}],
+                legend: {{
+                    itemStyle: {{
+                        color: '#64748b',
+                        fontSize: '11px'
+                    }},
+                    itemHoverStyle: {{
+                        color: '#94a3b8'
+                    }},
+                    align: 'right',
+                    verticalAlign: 'top',
+                    y: -10
+                }},
+                tooltip: {{
+                    shared: true,
+                    backgroundColor: '#1e222d',
+                    borderColor: '#363c4e',
+                    borderRadius: 4,
+                    style: {{
+                        color: '#cbd5e1',
+                        fontSize: '12px'
+                    }}
+                }},
+                plotOptions: {{
+                    area: {{
+                        fillColor: {{
+                            linearGradient: {{ x1: 0, y1: 0, x2: 0, y2: 1 }},
+                            stops: [
+                                [0, 'rgba(59, 130, 246, 0.22)'],
+                                [1, 'rgba(59, 130, 246, 0.00)']
+                            ]
+                        }},
+                        marker: {{
+                            radius: 3,
+                            fillColor: '#3b82f6',
+                            lineWidth: 1,
+                            lineColor: '#1e222d'
+                        }},
+                        lineWidth: 3,
+                        lineColor: '#3b82f6',
+                        threshold: null
+                    }}
+                }},
+                series: [{{
+                    name: 'Close Price',
+                    type: 'area',
+                    data: prices,
+                    yAxis: 0,
+                    tooltip: {{
+                        valuePrefix: priceSymbol
+                    }}
+                }}, {{
+                    name: 'Volume',
+                    type: 'column',
+                    data: volumes,
+                    yAxis: 1,
+                    color: 'rgba(148, 163, 184, 0.1)',
+                    borderWidth: 0,
+                    tooltip: {{
+                        valueDecimals: 0
+                    }}
+                }}]
+            }});
+        </script>
+    </body>
+    </html>
+    """
+    return html

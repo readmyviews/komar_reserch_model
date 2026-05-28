@@ -1,7 +1,7 @@
 import pytest
 import plotly.graph_objects as go
 import pandas as pd
-from src.ui_components import get_price_chart, get_growth_chart, get_glassmorphic_css
+from src.ui_components import get_price_chart, get_growth_chart, get_glassmorphic_css, get_highcharts_html
 
 def test_ui_generators():
     history_df = pd.DataFrame({
@@ -18,3 +18,8 @@ def test_ui_generators():
     css = get_glassmorphic_css()
     assert ".komar-card" in css
     assert "background" in css
+    
+    hc_html = get_highcharts_html(history_df, "TEST", "₹")
+    assert isinstance(hc_html, str)
+    assert "Highcharts.chart" in hc_html
+    assert "TEST" in hc_html

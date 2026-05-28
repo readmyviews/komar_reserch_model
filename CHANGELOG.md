@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-aligned the Row 1 grid layout to exactly 4 symmetric columns (`col1`, `col2`, `col3`, `col4`) for a perfectly balanced visual representation.
 - **Gemini Sidebar Success Message Cleanup**:
   - Removed the `"🔑 Gemini API Key configured."` sidebar success notification from `app.py` for a cleaner sidebar interface.
+- **Dynamic Header with 52-Week Pricing Metrics**:
+  - Replaced the static `"Patel Stock Detective"` header with an elegant, dynamic header component displaying the resolved stock name, ticker symbol, current price, and 52-week highest and lowest prices when a search is active.
+- **Highcharts Integration for Stock Charting**:
+  - Replaced the Plotly stock price history chart with an advanced Highcharts area and translucent column volume overlay chart, rendered beautifully using Streamlit iframe components.
 
 ### Fixed
 - **Robust yfinance News Parser**:
