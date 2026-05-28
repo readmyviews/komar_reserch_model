@@ -48,4 +48,7 @@
 | Execute | Add statistics: Render widescreen stock summary card in app.py | [x] | Task 3: Name, Price, 52W High, 52W Low above Company Profile |
 | Execute | Add statistics: Render Historical & Growth Metrics in app.py | [x] | Task 4: Color-coded verdict & two-column details grid |
 | Execute | Add statistics: Verify and run unit test suite | [x] | Final test verification |
-
+| Design | Rate Limit Resilience: Explore design & plan | [x] | Brainstormed, saved design & plan |
+| Execute | Rate Limit Resilience: Update Retry & Fallback Logic in src/agent.py | [ ] | Task 1: Retry & fallback logic with exponential backoff & jitter |
+| Execute | Rate Limit Resilience: Align and Enhance Unit Tests in tests/test_agent.py | [ ] | Task 2: Align test suite and patch uniform/sleep |
+| Execute | Rate Limit Resilience: Full Workspace Verification | [ ] | Task 3: Run all tests and verify Streamlit app |
