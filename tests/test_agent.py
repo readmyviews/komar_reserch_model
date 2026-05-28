@@ -53,9 +53,12 @@ def test_generate_komar_analysis(mock_client_class, mock_get_secret):
     assert res["buying_range_status"] == "IN BUY ZONE"
     assert " Tata Power " in res["sister_stocks_details"]
 
+@patch("src.agent.random.uniform")
+@patch("src.agent.time.sleep")
 @patch("src.agent._get_secret")
 @patch("src.agent.genai.Client")
-def test_generate_komar_analysis_fallback_on_rate_limit(mock_client_class, mock_get_secret):
+def test_generate_komar_analysis_fallback_on_rate_limit(mock_client_class, mock_get_secret, mock_sleep, mock_uniform):
+    mock_uniform.return_value = 0.5
     # Mock secrets to be independent of local secrets.toml on disk
     mock_get_secret.side_effect = lambda key, default=None: "dummy_key" if key == "GEMINI_API_KEY" else ("gemini-3.1-pro-preview" if key == "GEMINI_MODEL" else default)
 
@@ -63,8 +66,8 @@ def test_generate_komar_analysis_fallback_on_rate_limit(mock_client_class, mock_
     mock_client_class.return_value = mock_client
     
     # Define a side_effect function for generate_content
-    # The first call (with gemini-3.1-pro-preview) will raise a rate-limit exception
-    # The second call (with gemini-2.5-flash fallback) will succeed
+    # The first 5 calls (with gemini-3.1-pro-preview) will raise a rate-limit exception
+    # The sixth call (with gemini-2.5-flash fallback) will succeed
     call_count = 0
     
     mock_response = MagicMock()
@@ -87,7 +90,8 @@ def test_generate_komar_analysis_fallback_on_rate_limit(mock_client_class, mock_
     def mock_generate_content(*args, **kwargs):
         nonlocal call_count
         call_count += 1
-        if call_count == 1:
+        model = kwargs.get("model", "")
+        if model == "gemini-3.1-pro-preview":
             # Raise resource exhausted / rate limit error
             raise Exception("429 Resource Exhausted: Quota exceeded for gemini-3.1-pro-preview")
         return mock_response
@@ -114,11 +118,18 @@ def test_generate_komar_analysis_fallback_on_rate_limit(mock_client_class, mock_
     assert res["rating"] == 9
     assert res["buying_range"] == "$900 - $950"
     
-    # Confirm generate_content was called twice (first failed, second succeeded)
-    assert call_count == 2
+    # Confirm generate_content was called 6 times (5 failed primary retries, 1 fallback success)
+    assert call_count == 6
     
-    # Check that the second call was called with fallback model gemini-2.5-flash
+    # Check that the call history matches
     calls = mock_client.models.generate_content.call_args_list
-    assert len(calls) == 2
+    assert len(calls) == 6
     assert calls[0][1]["model"] == "gemini-3.1-pro-preview"
-    assert calls[1][1]["model"] == "gemini-2.5-flash"
+    assert calls[1][1]["model"] == "gemini-3.1-pro-preview"
+    assert calls[2][1]["model"] == "gemini-3.1-pro-preview"
+    assert calls[3][1]["model"] == "gemini-3.1-pro-preview"
+    assert calls[4][1]["model"] == "gemini-3.1-pro-preview"
+    assert calls[5][1]["model"] == "gemini-2.5-flash"
+    
+    # Verify sleep was called 4 times for the 5 attempts (on the 5th attempt it breaks, no sleep)
+    assert mock_sleep.call_count == 4
