@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import time
+import random
 from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
@@ -124,25 +125,50 @@ def generate_komar_analysis(name: str, country: str, stats: dict) -> dict:
     """
     
     primary_model = _get_secret("GEMINI_MODEL", "gemini-2.5-flash").strip()
-    fallback_model = "gemini-2.5-flash"
     
-    try:
-        return _execute_gemini_call(client, primary_model, system_instruction, prompt)
-    except Exception as e:
-        err_msg = str(e).lower()
-        is_rate_limit = "429" in err_msg or "resource_exhausted" in err_msg or "rate limit" in err_msg or "quota" in err_msg or "exhausted" in err_msg
-        
-        if is_rate_limit and primary_model != fallback_model:
-            logger.warning(
-                f"Gemini API rate limit or quota exceeded with primary model '{primary_model}': {str(e)}. "
-                f"Automatically falling back to high-availability model '{fallback_model}'..."
-            )
-            # Re-attempt the call with fallback model
+    # Construct the fallback chain dynamically based on the primary model
+    fallback_chain = [primary_model]
+    if "gemini-2.5-flash" not in fallback_chain:
+        fallback_chain.append("gemini-2.5-flash")
+    if "gemini-2.0-flash" not in fallback_chain:
+        fallback_chain.append("gemini-2.0-flash")
+    
+    max_retries = 5
+    base_delay = 2.0
+    
+    last_exception = None
+    
+    for model_name in fallback_chain:
+        logger.info(f"Attempting analysis using model '{model_name}' in the fallback chain")
+        for attempt in range(max_retries):
             try:
-                return _execute_gemini_call(client, fallback_model, system_instruction, prompt)
-            except Exception as fe:
-                logger.error(f"Fallback model '{fallback_model}' failed: {str(fe)}", exc_info=True)
-                raise fe
-        else:
-            logger.error(f"Gemini API call failed: {str(e)}", exc_info=True)
-            raise e
+                return _execute_gemini_call(client, model_name, system_instruction, prompt)
+            except Exception as e:
+                err_msg = str(e).lower()
+                is_rate_limit = any(x in err_msg for x in ["429", "resource_exhausted", "rate limit", "quota", "exhausted"])
+                
+                if is_rate_limit:
+                    last_exception = e
+                    if attempt < max_retries - 1:
+                        # Exponential backoff with jitter: base_delay^attempt + jitter
+                        delay = (base_delay ** attempt) + random.uniform(0.1, 1.0)
+                        logger.warning(
+                            f"Gemini API rate limit or quota exceeded on attempt {attempt+1}/{max_retries} "
+                            f"for model '{model_name}'. Retrying in {delay:.2f}s..."
+                        )
+                        time.sleep(delay)
+                        continue
+                    else:
+                        logger.warning(
+                            f"Model '{model_name}' exhausted all {max_retries} retries due to rate limits."
+                        )
+                        break  # Break inner loop, move to next model in fallback_chain
+                else:
+                    logger.error(f"Gemini API call failed with non-rate-limit exception: {str(e)}", exc_info=True)
+                    raise e
+                    
+    # If we exit the fallback chain without returning, raise the last exception
+    logger.error("All models in the fallback chain exhausted their retries due to rate limits.", exc_info=True)
+    if last_exception:
+        raise last_exception
+    raise Exception("API Rate Limit Exceeded: All fallback models exhausted.")
