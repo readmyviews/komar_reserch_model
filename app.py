@@ -228,7 +228,7 @@ if analyze_btn or "stats" in st.session_state:
                 
             except Exception as e:
                 logger.error(f"Failed to execute Stage 1 for stock '{stock_name}': {str(e)}", exc_info=True)
-                st.error(f"❌ Analysis failed: {str(e)}")
+                st.error("❌ Failed to fetch stock data. Please check the stock name/ticker symbol and your internet connection.")
                 st.info("💡 Pro-tip: Verify the stock symbol is correct. For Indian equities listed on NSE, use symbols like ADANIPOWER, Reliance, or Tata Power.")
 
         # Stage 2: Run Gemini Qualitative Analysis
@@ -248,7 +248,13 @@ if analyze_btn or "stats" in st.session_state:
                     
             except Exception as e:
                 logger.error(f"Failed to execute Stage 2 for stock '{stock_name}': {str(e)}", exc_info=True)
-                st.error(f"❌ Analysis failed: {str(e)}")
+                err_msg = str(e)
+                if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg or "quota" in err_msg.lower():
+                    st.error("❌ Gemini API Rate Limit Exceeded (429 Quota). Please wait a few seconds and click 'Run Analysis' again.")
+                elif "api_key" in err_msg.lower() or "invalid key" in err_msg.lower() or "api key" in err_msg.lower():
+                    st.error("❌ Invalid Gemini API Key. Please configure a valid key in your Control Center.")
+                else:
+                    st.error("❌ Gemini AI Analysis temporarily unavailable. Please click 'Run Analysis' again in a few moments.")
 
 # Draw Dashboard UI if session state contains metrics
 if "analysis" in st.session_state:
