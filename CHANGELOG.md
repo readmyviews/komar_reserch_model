@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Gemini Sidebar Success Message Cleanup**:
   - Removed the `"🔑 Gemini API Key configured."` sidebar success notification from `app.py` for a cleaner sidebar interface.
 
+### Fixed
+- **Robust yfinance News Parser**:
+  - Fixed an `AttributeError` crash on `NoneType` when parsing nested `clickThroughUrl`, `canonicalUrl`, or `provider` keys in the raw `yfinance` news payload. Added robust `isinstance` dictionary type checks.
+
 ## [1.1.0] - 2026-05-27
 
 ### Added

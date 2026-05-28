@@ -190,18 +190,25 @@ if "analysis" in st.session_state:
                     title = item.get("title", "News Headline")
                     
                 link = "#"
-                if "clickThroughUrl" in content:
-                    link = content["clickThroughUrl"].get("url", "#")
-                elif "canonicalUrl" in content:
-                    link = content["canonicalUrl"].get("url", "#")
+                click_through = content.get("clickThroughUrl")
+                canonical = content.get("canonicalUrl")
+                if isinstance(click_through, dict):
+                    link = click_through.get("url", "#")
+                elif isinstance(canonical, dict):
+                    link = canonical.get("url", "#")
                 else:
                     link = item.get("link", "#")
+                if not link:
+                    link = "#"
                     
                 publisher = "Source"
-                if "provider" in content:
-                    publisher = content["provider"].get("displayName", "Source")
+                provider = content.get("provider")
+                if isinstance(provider, dict):
+                    publisher = provider.get("displayName", "Source")
                 else:
                     publisher = item.get("publisher", "Source")
+                if not publisher:
+                    publisher = "Source"
                 
                 # Flat string representation to prevent Markdown 4-space code block rendering bugs
                 news_html += f'<div style="margin-bottom: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 0.5rem;">' \
