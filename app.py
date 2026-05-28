@@ -40,9 +40,9 @@ st.set_page_config(
 st.markdown(get_glassmorphic_css(), unsafe_allow_html=True)
 
 # Main Application Title Header
-if "analysis" in st.session_state:
+if "stats" in st.session_state:
     stats = st.session_state["stats"]
-    price_symbol = "₹" if st.session_state["last_search_country"] == "India" else "$"
+    price_symbol = "₹" if st.session_state.get("last_search_country", "India") == "India" else "$"
     high_52w = stats.get("fifty_two_week_high", 0.0)
     low_52w = stats.get("fifty_two_week_low", 0.0)
     
@@ -175,17 +175,31 @@ else:
 analyze_btn = st.sidebar.button("Run Analysis")
 
 # Trigger analysis or retrieve from state to optimize rendering (Streamlit session state)
-if analyze_btn or "metrics" in st.session_state:
+if analyze_btn or "stats" in st.session_state:
     if not api_configured:
         st.error("Please add a valid `GEMINI_API_KEY` to your secrets configuration first.")
     elif not stock_name:
         st.warning("Please enter a valid stock name or ticker symbol.")
     else:
-        # Check if the user is triggering a fresh run or reloading
-        fresh_run = analyze_btn or "metrics" not in st.session_state or st.session_state.get("last_search_name") != stock_name or st.session_state.get("last_search_country") != country
+        # Check if the user is triggering a fresh run
+        is_new_search = (
+            st.session_state.get("last_search_name") != stock_name or 
+            st.session_state.get("last_search_country") != country
+        )
+        fresh_run = analyze_btn or is_new_search
         
         if fresh_run:
-            logger.info(f"Triggering fresh detective analysis pipeline for name: '{stock_name}' in country: '{country}'")
+            # Clear caches so we start clean
+            if "stats" in st.session_state:
+                del st.session_state["stats"]
+            if "analysis" in st.session_state:
+                del st.session_state["analysis"]
+            if "metrics" in st.session_state:
+                del st.session_state["metrics"]
+            
+        # Stage 1: Fetch stock stats via yfinance
+        if "stats" not in st.session_state:
+            logger.info(f"Stage 1: Fetching yfinance stats for '{stock_name}' ({country})")
             try:
                 with st.spinner("🕵️‍♂️ Step 1: Resolving ticker symbol and fetching yfinance data..."):
                     resolved_ticker = resolve_ticker(stock_name, country)
@@ -202,26 +216,39 @@ if analyze_btn or "metrics" in st.session_state:
                             news_list = []
                     except Exception:
                         news_list = []
-                    
-                with st.spinner("🧠 Step 2: Running Gemini detective to perform thematic research..."):
-                    analysis = generate_komar_analysis(stock_name, country, stats)
-                    
-                # Save details into Streamlit Session State for seamless interactions
+                
+                # Cache stats immediately and rerun to display the header card
                 st.session_state["resolved_ticker"] = resolved_ticker
                 st.session_state["stats"] = stats
                 st.session_state["history"] = history
-                st.session_state["analysis"] = analysis
                 st.session_state["news"] = news_list[:3]
                 st.session_state["last_search_name"] = stock_name
                 st.session_state["last_search_country"] = country
-                st.session_state["metrics"] = True
-                
-                logger.info(f"Pipeline executed successfully. Results cached in session state for ticker '{resolved_ticker}'")
+                st.rerun()
                 
             except Exception as e:
-                logger.error(f"Failed to execute pipeline for stock '{stock_name}': {str(e)}", exc_info=True)
+                logger.error(f"Failed to execute Stage 1 for stock '{stock_name}': {str(e)}", exc_info=True)
                 st.error(f"❌ Analysis failed: {str(e)}")
                 st.info("💡 Pro-tip: Verify the stock symbol is correct. For Indian equities listed on NSE, use symbols like ADANIPOWER, Reliance, or Tata Power.")
+
+        # Stage 2: Run Gemini Qualitative Analysis
+        elif "analysis" not in st.session_state:
+            logger.info(f"Stage 2: Running Gemini analysis for '{stock_name}'")
+            try:
+                with st.spinner("🧠 Step 2: Running Gemini detective to perform thematic research..."):
+                    stats = st.session_state["stats"]
+                    resolved_ticker = st.session_state["resolved_ticker"]
+                    
+                    analysis = generate_komar_analysis(stock_name, country, stats)
+                    
+                    # Cache analysis and complete the pipeline
+                    st.session_state["analysis"] = analysis
+                    st.session_state["metrics"] = True
+                    st.rerun()
+                    
+            except Exception as e:
+                logger.error(f"Failed to execute Stage 2 for stock '{stock_name}': {str(e)}", exc_info=True)
+                st.error(f"❌ Analysis failed: {str(e)}")
 
 # Draw Dashboard UI if session state contains metrics
 if "analysis" in st.session_state:
@@ -653,7 +680,7 @@ if "analysis" in st.session_state:
             ],
             "Trend Status": ["Base Reference", sma50_icon, sma200_icon]
         }))
-else:
+elif "stats" not in st.session_state:
     # Highly attractive, premium glassmorphic momentum strategy welcome page
     welcome_html = """
     <div style="margin-top: 1rem; font-family: 'Outfit', sans-serif;">
