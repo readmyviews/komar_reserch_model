@@ -80,8 +80,13 @@ if "analysis" in st.session_state:
 
 # Sidebar configurations
 st.sidebar.markdown("""
+<div style="padding: 0.5rem 0; margin-bottom: 1.25rem; text-align: center;">
+    <h2 style="color: #ffffff; margin: 0; font-size: 1.65rem; font-weight: 900; letter-spacing: 0.15em; background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 20px rgba(59, 130, 246, 0.2); font-family: 'Outfit', sans-serif;">
+        READMYVIEWS
+    </h2>
+</div>
 <div style="padding: 0.25rem 0; margin-bottom: 1rem;">
-    <h3 style="color: #3b82f6; margin: 0; font-size: 1.25rem;">🕵️‍♂️ Control Center</h3>
+    <h3 style="color: #3b82f6; margin: 0; font-size: 1.15rem; font-weight: 700;">🕵️‍♂️ Control Center</h3>
     <hr style="margin: 0.5rem 0; border-color: rgba(255, 255, 255, 0.08);"/>
 </div>
 """, unsafe_allow_html=True)

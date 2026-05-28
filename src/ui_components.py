@@ -17,7 +17,7 @@ def get_glassmorphic_css() -> str:
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
     
-    html, body, [class*="css"], .stText, .stMarkdown, p, div, span, h1, h2, h3, h4, h5, h6, label {
+    html, body, .stText, .stMarkdown, p, h1, h2, h3, h4, h5, h6, label, input, button, select, textarea {
         font-family: 'Outfit', sans-serif !important;
     }
     
