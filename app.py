@@ -167,6 +167,41 @@ if "analysis" in st.session_state:
     resolved_ticker = st.session_state["resolved_ticker"]
     
     # ------------------ Company Overview & News Section (Top of UI) ------------------
+    # Task 1: Stock Details Card (Widescreen header card before Company Profile)
+    price_symbol = "₹" if st.session_state.get("last_search_country", "India") == "India" else "$"
+    high_52w = stats.get("fifty_two_week_high", 0.0)
+    low_52w = stats.get("fifty_two_week_low", 0.0)
+    
+    header_html = f"""
+    <div class="komar-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h3 style="color: #3b82f6; margin: 0; font-size: 1.45rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
+                    🏢 {st.session_state.get('last_search_name', '').upper()} <span style="font-size: 0.95rem; color: #64748b; font-weight: 600;">({stats['ticker']})</span>
+                </h3>
+            </div>
+            <div style="display: flex; gap: 1.5rem; align-items: center;">
+                <div>
+                    <span style="color: #64748b; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 0.1rem;">Current Price</span>
+                    <span style="color: #ffffff; font-size: 1.35rem; font-weight: 800;">{price_symbol}{stats['current_price']:.2f}</span>
+                </div>
+                <div style="width: 1px; height: 25px; background: rgba(255,255,255,0.08);"></div>
+                <div>
+                    <span style="color: #10b981; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 0.1rem;">52W High</span>
+                    <span style="color: #10b981; font-size: 1.35rem; font-weight: 700;">{price_symbol}{high_52w:.2f}</span>
+                </div>
+                <div style="width: 1px; height: 25px; background: rgba(255,255,255,0.08);"></div>
+                <div>
+                    <span style="color: #f43f5e; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 0.1rem;">52W Low</span>
+                    <span style="color: #f43f5e; font-size: 1.35rem; font-weight: 700;">{price_symbol}{low_52w:.2f}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+    header_html_flat = "\n".join(line.strip() for line in header_html.split("\n"))
+    st.markdown(header_html_flat, unsafe_allow_html=True)
+
     col_overview, col_news = st.columns([2, 1])
     
     with col_overview:
@@ -446,6 +481,94 @@ if "analysis" in st.session_state:
         components.html(get_highcharts_html(history, resolved_ticker, price_symbol), height=390)
     with chart_col2:
         st.plotly_chart(get_growth_chart(stats['sales_growth_yoy'], stats['eps_growth_yoy']), width="stretch")
+        
+    # ------------------ Row 3.5: Historical Performance & Financial Growth Section ------------------
+    verdict = stats.get("performance_verdict", "Average")
+    if verdict == "Good":
+        verdict_color = "#10b981"
+        verdict_bg = "rgba(16, 185, 129, 0.05)"
+        verdict_border = "rgba(16, 185, 129, 0.2)"
+    elif verdict == "Bad":
+        verdict_color = "#f43f5e"
+        verdict_bg = "rgba(244, 63, 94, 0.05)"
+        verdict_border = "rgba(244, 63, 94, 0.2)"
+    else:
+        verdict_color = "#eab308"
+        verdict_bg = "rgba(234, 179, 8, 0.05)"
+        verdict_border = "rgba(234, 179, 8, 0.2)"
+
+    def fmt_ret(val):
+        if val is None:
+            return "N/A", "#64748b"
+        color = "#10b981" if val >= 0 else "#f43f5e"
+        sign = "+" if val >= 0 else ""
+        return f"{sign}{val:.1f}%", color
+
+    r1m_text, r1m_color = fmt_ret(stats.get("return_1m"))
+    r3m_text, r3m_color = fmt_ret(stats.get("return_3m"))
+    r6m_text, r6m_color = fmt_ret(stats.get("return_6m"))
+    r1y_text, r1y_color = fmt_ret(stats.get("return_1y"))
+    r5y_text, r5y_color = fmt_ret(stats.get("return_5y"))
+
+    sales_growth = stats.get("sales_growth_yoy", 0.0)
+    rev_growth = stats.get("revenue_growth", 0.0)
+    net_profit = stats.get("net_profit_margin", 0.0)
+
+    perf_html = f"""
+    <div class="komar-card" style="margin-bottom: 1.5rem; padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+            <h4 style="color: #3b82f6; margin: 0; font-size: 1.25rem;">📈 Historical Performance & Financial Growth Overview</h4>
+            <div style="background: {verdict_bg}; border: 1px solid {verdict_border}; padding: 0.4rem 1rem; border-radius: 6px; display: flex; align-items: center; gap: 0.75rem;">
+                <span style="color: #64748b; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Automated Verdict:</span>
+                <span style="color: {verdict_color}; font-weight: 800; font-size: 0.95rem; text-transform: uppercase;">{verdict}</span>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; width: 100%;">
+            <div style="flex: 1; min-width: 300px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px;">
+                <div style="color: #3b82f6; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.25rem;">📅 Price Horizon Returns</div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.85rem;">
+                    <span style="color: #64748b;">1 Month Return:</span>
+                    <span style="font-weight: 700; color: {r1m_color}">{r1m_text}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.85rem;">
+                    <span style="color: #64748b;">3 Months Return:</span>
+                    <span style="font-weight: 700; color: {r3m_color}">{r3m_text}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.85rem;">
+                    <span style="color: #64748b;">6 Months Return:</span>
+                    <span style="font-weight: 700; color: {r6m_color}">{r6m_text}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.85rem;">
+                    <span style="color: #64748b;">1 Year Return:</span>
+                    <span style="font-weight: 700; color: {r1y_color}">{r1y_text}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                    <span style="color: #64748b;">5 Years Return:</span>
+                    <span style="font-weight: 700; color: {r5y_color}">{r5y_text}</span>
+                </div>
+            </div>
+            
+            <div style="flex: 1; min-width: 300px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px;">
+                <div style="color: #10b981; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.25rem;">📊 Financial Growth Rates</div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.85rem;">
+                    <span style="color: #64748b;">YoY Sales Growth:</span>
+                    <span style="font-weight: 700; color: {'#10b981' if sales_growth >= 20.0 else '#cbd5e1'}">{sales_growth:.1f}%</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.85rem;">
+                    <span style="color: #64748b;">YoY Revenue Growth:</span>
+                    <span style="font-weight: 700; color: {'#10b981' if rev_growth >= 20.0 else '#cbd5e1'}">{rev_growth:.1f}%</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                    <span style="color: #64748b;">Net Profit Margin:</span>
+                    <span style="font-weight: 700; color: {'#10b981' if net_profit >= 15.0 else '#cbd5e1'}">{net_profit:.1f}%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+    perf_html_flat = "\n".join(line.strip() for line in perf_html.split("\n"))
+    st.markdown(perf_html_flat, unsafe_allow_html=True)
         
     # ------------------ Row 4: Gemini Detective Analytical Reports ------------------
     st.markdown("""
