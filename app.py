@@ -516,7 +516,7 @@ if "analysis" in st.session_state:
         }))
 else:
     # Highly attractive, premium glassmorphic momentum strategy welcome page
-    st.markdown(textwrap.dedent("""
+    welcome_html = """
     <div style="margin-top: 1rem; font-family: 'Outfit', sans-serif;">
         <!-- Large beautiful glassmorphic welcome card -->
         <div style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1px solid rgba(59, 130, 246, 0.15); border-radius: 16px; padding: 2.5rem; text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); margin-bottom: 2rem;">
@@ -585,4 +585,6 @@ else:
             </p>
         </div>
     </div>
-    """), unsafe_allow_html=True)
+    """
+    welcome_html_flat = "\n".join(line.strip() for line in welcome_html.split("\n"))
+    st.markdown(welcome_html_flat, unsafe_allow_html=True)

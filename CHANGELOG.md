@@ -29,8 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed an `AttributeError` crash on `NoneType` when parsing nested `clickThroughUrl`, `canonicalUrl`, or `provider` keys in the raw `yfinance` news payload. Added robust `isinstance` dictionary type checks.
 - **Multi-Stage Market Capitalization Fallbacks**:
   - Implemented a robust, multi-stage fallback mechanism in `src/analyzer.py` to prevent `0.00` market capitalization readings when `yfinance`'s primary `.info` scraper fails. The engine sequentially tries `ticker.info.get("marketCap")`, fast info `fast_info.market_cap`, `ticker.info.get("sharesOutstanding") * price`, fast info `fast_info.shares_outstanding * price`, and finally `balance_sheet["Ordinary Shares Number"] * price`.
-- **Welcome Portal Markdown Indentation Fix**:
-  - Wrapped the multi-line welcome portal HTML string in `textwrap.dedent` to strip leading Python indentation spacing, resolving the Streamlit markdown parser bug that was rendering the welcome screen as raw text inside a code block.
+- **Welcome Portal Markdown Indentation Flat-Stripper**:
+  - Replaced `textwrap.dedent` with a robust line-by-line split-and-strip flattener on the multi-line welcome portal HTML string. This guarantees that absolutely every line of the HTML payload has zero leading whitespace, completely bypassing Streamlit's aggressive markdown code block parser.
 
 ## [1.1.0] - 2026-05-27
 
