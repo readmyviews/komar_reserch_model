@@ -410,9 +410,68 @@ def calculate_metrics(ticker_symbol: str) -> dict:
         market_cap_native = 0.0
         try:
             logger.debug(f"Fetching market cap from info dictionary for {ticker_symbol}")
-            market_cap_native = float(ticker.info.get("marketCap", 0.0))
+            market_cap_native = float(ticker.info.get("marketCap") or 0.0)
         except Exception as ex:
             logger.debug(f"Failed to fetch market cap from info dict: {str(ex)}")
+
+        # Fallback 1: Try fast_info market_cap
+        if not market_cap_native or market_cap_native == 0.0:
+            try:
+                fast_info = getattr(ticker, "fast_info", None)
+                if fast_info is not None:
+                    mcap_fast = None
+                    if hasattr(fast_info, "market_cap"):
+                        mcap_fast = fast_info.market_cap
+                    elif hasattr(fast_info, "get"):
+                        mcap_fast = fast_info.get("market_cap") or fast_info.get("marketCap")
+                    
+                    if mcap_fast is not None and float(mcap_fast) > 0:
+                        market_cap_native = float(mcap_fast)
+                        logger.info(f"Market Cap fetched via fast_info: {market_cap_native}")
+            except Exception as ex:
+                logger.debug(f"Failed to fetch market cap from fast_info: {str(ex)}")
+
+        # Fallback 2: Calculate using sharesOutstanding from ticker.info
+        if not market_cap_native or market_cap_native == 0.0:
+            try:
+                shares = float(ticker.info.get("sharesOutstanding") or ticker.info.get("impliedSharesOutstanding") or 0.0)
+                if shares > 0:
+                    market_cap_native = current_price * shares
+                    logger.info(f"Market Cap computed via sharesOutstanding fallback: {market_cap_native}")
+            except Exception as ex:
+                logger.debug(f"Failed to compute market cap from sharesOutstanding: {str(ex)}")
+
+        # Fallback 3: Try fast_info shares_outstanding
+        if not market_cap_native or market_cap_native == 0.0:
+            try:
+                fast_info = getattr(ticker, "fast_info", None)
+                if fast_info is not None:
+                    shares_fast = None
+                    if hasattr(fast_info, "shares_outstanding"):
+                        shares_fast = fast_info.shares_outstanding
+                    elif hasattr(fast_info, "get"):
+                        shares_fast = fast_info.get("shares_outstanding") or fast_info.get("sharesOutstanding")
+                        
+                    if shares_fast is not None and float(shares_fast) > 0:
+                        market_cap_native = current_price * float(shares_fast)
+                        logger.info(f"Market Cap computed via fast_info shares_outstanding fallback: {market_cap_native}")
+            except Exception as ex:
+                logger.debug(f"Failed to compute market cap from fast_info shares: {str(ex)}")
+
+        # Fallback 4: Retrieve shares from balance sheet "Ordinary Shares Number"
+        if not market_cap_native or market_cap_native == 0.0:
+            try:
+                balance_sheet = ticker.balance_sheet
+                if balance_sheet is not None and not balance_sheet.empty:
+                    idx_lower = [str(x).lower().strip() for x in balance_sheet.index]
+                    if "ordinary shares number" in idx_lower:
+                        match_idx = idx_lower.index("ordinary shares number")
+                        shares_val = balance_sheet.iloc[match_idx].iloc[0]
+                        if shares_val is not None and not pd.isna(shares_val) and float(shares_val) > 0:
+                            market_cap_native = current_price * float(shares_val)
+                            logger.info(f"Market Cap computed via balance sheet Ordinary Shares Number fallback: {market_cap_native}")
+            except Exception as ex:
+                logger.debug(f"Failed to compute market cap from balance sheet shares: {str(ex)}")
 
         market_cap_usd = market_cap_native
         if ticker_symbol.upper().endswith(".NS") or ticker_symbol.upper().endswith(".BO"):

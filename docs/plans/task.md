@@ -37,4 +37,5 @@
 | Execute | Task 4: Implement 4 Market Phases widget | [x] | Completed |
 | Execute | Task 5: Remove Gemini sidebar message and 30-day performance UI card | [x] | Adjusted layout to 4 symmetric columns |
 | Execute | Task 6: Reverify 30-day performance calculation with calendar lookback | [x] | Refactored using pd.Timedelta lookback and nearest index alignment |
+| Execute | Task 7: Implement multi-stage Market Cap fallback logic | [x] | Leveraged fast_info, sharesOutstanding, and balance sheet shares outstanding |
 | Execute | Verify changes and run test suite | [x] | All 13 tests passed |

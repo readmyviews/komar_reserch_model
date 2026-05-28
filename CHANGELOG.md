@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Robust yfinance News Parser**:
   - Fixed an `AttributeError` crash on `NoneType` when parsing nested `clickThroughUrl`, `canonicalUrl`, or `provider` keys in the raw `yfinance` news payload. Added robust `isinstance` dictionary type checks.
+- **Multi-Stage Market Capitalization Fallbacks**:
+  - Implemented a robust, multi-stage fallback mechanism in `src/analyzer.py` to prevent `0.00` market capitalization readings when `yfinance`'s primary `.info` scraper fails. The engine sequentially tries `ticker.info.get("marketCap")`, fast info `fast_info.market_cap`, `ticker.info.get("sharesOutstanding") * price`, fast info `fast_info.shares_outstanding * price`, and finally `balance_sheet["Ordinary Shares Number"] * price`.
 
 ## [1.1.0] - 2026-05-27
 
