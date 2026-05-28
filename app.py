@@ -82,7 +82,7 @@ if "stats" in st.session_state:
 st.sidebar.markdown("""
 <div style="padding: 0.5rem 0; margin-bottom: 1.25rem; text-align: center;">
     <h2 style="color: #ffffff; margin: 0; font-size: 1.65rem; font-weight: 900; letter-spacing: 0.15em; background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 20px rgba(59, 130, 246, 0.2); font-family: 'Outfit', sans-serif;">
-        READMYVIEWS
+        READMYVIEWS.COM
     </h2>
 </div>
 <div style="padding: 0.25rem 0; margin-bottom: 1rem;">
