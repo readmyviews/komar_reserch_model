@@ -52,24 +52,20 @@ if "stats" in st.session_state:
     trend_header_html = ""
     if analysis:
         rating_score = analysis.get("rating", 0)
-        rating_header_html = f"""
-        <div style="width: 1px; height: 35px; background: rgba(255,255,255,0.08);"></div>
-        <div style="text-align: right;">
-            <div style="color: #eab308; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">Rating</div>
-            <div style="color: #eab308; font-size: 1.5rem; font-weight: 700; text-shadow: 0 0 10px rgba(234, 179, 8, 0.15);">{rating_score}/10</div>
-        </div>
-        """
+        rating_header_html = f"""<div style="width: 1px; height: 35px; background: rgba(255,255,255,0.08);"></div>
+<div style="text-align: right;">
+<div style="color: #eab308; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">Rating</div>
+<div style="color: #eab308; font-size: 1.5rem; font-weight: 700; text-shadow: 0 0 10px rgba(234, 179, 8, 0.15);">{rating_score}/10</div>
+</div>"""
         
         sma_above_all = stats.get('is_above_50_sma', False) and stats.get('is_above_200_sma', False)
         trend_color = "#10b981" if sma_above_all else "#f43f5e"
         trend_text = "BULLISH UPTREND" if sma_above_all else "NEUTRAL / BEARISH"
-        trend_header_html = f"""
-        <div style="width: 1px; height: 35px; background: rgba(255,255,255,0.08);"></div>
-        <div style="text-align: right;">
-            <div style="color: #cbd5e1; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">Technical Trend Status</div>
-            <div style="color: {trend_color}; font-size: 1.5rem; font-weight: 700; text-shadow: 0 0 10px {trend_color}2b;">{trend_text}</div>
-        </div>
-        """
+        trend_header_html = f"""<div style="width: 1px; height: 35px; background: rgba(255,255,255,0.08);"></div>
+<div style="text-align: right;">
+<div style="color: #cbd5e1; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">Technical Trend Status</div>
+<div style="color: {trend_color}; font-size: 1.5rem; font-weight: 700; text-shadow: 0 0 10px {trend_color}2b;">{trend_text}</div>
+</div>"""
         
     st.markdown(f"""
     <div style="margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
@@ -372,7 +368,31 @@ if "analysis" in st.session_state:
     # ------------------ Row 1: Glassmorphic Metrics Summary Cards (Row 1) ------------------
     price_symbol = "₹" if country == "India" else "$"
     
-    col1, col2 = st.columns(2)
+    # Format EVA
+    eva_val = stats.get("eva_native", 0.0)
+    eva_class = "status-positive" if eva_val >= 0 else "status-negative"
+    if abs(eva_val) >= 1e12:
+        eva_text = f"{price_symbol}{eva_val/1e12:.2f}T"
+    elif abs(eva_val) >= 1e9:
+        eva_text = f"{price_symbol}{eva_val/1e9:.2f}B"
+    elif abs(eva_val) >= 1e6:
+        eva_text = f"{price_symbol}{eva_val/1e6:.2f}M"
+    else:
+        eva_text = f"{price_symbol}{eva_val:,.2f}"
+        
+    # Format MVA
+    mva_val = stats.get("mva_native", 0.0)
+    mva_class = "status-positive" if mva_val >= 0 else "status-negative"
+    if abs(mva_val) >= 1e12:
+        mva_text = f"{price_symbol}{mva_val/1e12:.2f}T"
+    elif abs(mva_val) >= 1e9:
+        mva_text = f"{price_symbol}{mva_val/1e9:.2f}B"
+    elif abs(mva_val) >= 1e6:
+        mva_text = f"{price_symbol}{mva_val/1e6:.2f}M"
+    else:
+        mva_text = f"{price_symbol}{mva_val:,.2f}"
+        
+    col1, col2, col3, col4 = st.columns(4)
     
     # 1. Optimal Buying Range Card
     buy_range_val = analysis.get('buying_range', 'Calculating...')
@@ -413,6 +433,26 @@ if "analysis" in st.session_state:
             <div class="komar-metric-title">MARKET CAPITALIZATION</div>
             <div class="komar-metric-value">{mcap_text}</div>
             <div class="komar-metric-status">Native Valuation</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    # 3. Economic Value Added Card (EVA)
+    with col3:
+        st.markdown(f"""
+        <div class="komar-card">
+            <div class="komar-metric-title">ECONOMIC VALUE ADDED (EVA)</div>
+            <div class="komar-metric-value {eva_class}">{eva_text}</div>
+            <div class="komar-metric-status">NOPAT - (Invested Capital * WACC)</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    # 4. Market Value Added Card (MVA)
+    with col4:
+        st.markdown(f"""
+        <div class="komar-card">
+            <div class="komar-metric-title">MARKET VALUE ADDED (MVA)</div>
+            <div class="komar-metric-value {mva_class}">{mva_text}</div>
+            <div class="komar-metric-status">Market Cap - Book Value of Equity</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -495,51 +535,7 @@ if "analysis" in st.session_state:
         </div>
         """, unsafe_allow_html=True)
 
-    # ------------------ Row 2.5: Glassmorphic EVA and MVA KPI Cards ------------------
-    col_eva, col_mva = st.columns(2)
-    
-    # Format EVA
-    eva_val = stats.get("eva_native", 0.0)
-    eva_class = "status-positive" if eva_val >= 0 else "status-negative"
-    if abs(eva_val) >= 1e12:
-        eva_text = f"{price_symbol}{eva_val/1e12:.2f}T"
-    elif abs(eva_val) >= 1e9:
-        eva_text = f"{price_symbol}{eva_val/1e9:.2f}B"
-    elif abs(eva_val) >= 1e6:
-        eva_text = f"{price_symbol}{eva_val/1e6:.2f}M"
-    else:
-        eva_text = f"{price_symbol}{eva_val:,.2f}"
-        
-    # Format MVA
-    mva_val = stats.get("mva_native", 0.0)
-    mva_class = "status-positive" if mva_val >= 0 else "status-negative"
-    if abs(mva_val) >= 1e12:
-        mva_text = f"{price_symbol}{mva_val/1e12:.2f}T"
-    elif abs(mva_val) >= 1e9:
-        mva_text = f"{price_symbol}{mva_val/1e9:.2f}B"
-    elif abs(mva_val) >= 1e6:
-        mva_text = f"{price_symbol}{mva_val/1e6:.2f}M"
-    else:
-        mva_text = f"{price_symbol}{mva_val:,.2f}"
 
-    with col_eva:
-        st.markdown(f"""
-        <div class="komar-card">
-            <div class="komar-metric-title">ECONOMIC VALUE ADDED (EVA)</div>
-            <div class="komar-metric-value {eva_class}">{eva_text}</div>
-            <div class="komar-metric-status">NOPAT - (Invested Capital * WACC)</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col_mva:
-        st.markdown(f"""
-        <div class="komar-card">
-            <div class="komar-metric-title">MARKET VALUE ADDED (MVA)</div>
-            <div class="komar-metric-value {mva_class}">{mva_text}</div>
-            <div class="komar-metric-status">Market Cap - Book Value of Equity</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
     # ------------------ Row 3: Charts and Visualizations ------------------
     chart_col1, chart_col2 = st.columns([2, 1])
     with chart_col1:
