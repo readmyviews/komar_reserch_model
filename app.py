@@ -30,7 +30,7 @@ logger = logging.getLogger("komar.app")
 
 # Set Page Config for responsive full-screen layouts
 st.set_page_config(
-    page_title="Pratik Patel Stock Detective",
+    page_title="Readmyviews Stock Detective",
     page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -46,6 +46,31 @@ if "stats" in st.session_state:
     high_52w = stats.get("fifty_two_week_high", 0.0)
     low_52w = stats.get("fifty_two_week_low", 0.0)
     
+    # Extract Rating & Technical Trend Status dynamically if analysis is loaded
+    analysis = st.session_state.get("analysis")
+    rating_header_html = ""
+    trend_header_html = ""
+    if analysis:
+        rating_score = analysis.get("rating", 0)
+        rating_header_html = f"""
+        <div style="width: 1px; height: 35px; background: rgba(255,255,255,0.08);"></div>
+        <div style="text-align: right;">
+            <div style="color: #eab308; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">Rating</div>
+            <div style="color: #eab308; font-size: 1.5rem; font-weight: 700; text-shadow: 0 0 10px rgba(234, 179, 8, 0.15);">{rating_score}/10</div>
+        </div>
+        """
+        
+        sma_above_all = stats.get('is_above_50_sma', False) and stats.get('is_above_200_sma', False)
+        trend_color = "#10b981" if sma_above_all else "#f43f5e"
+        trend_text = "BULLISH UPTREND" if sma_above_all else "NEUTRAL / BEARISH"
+        trend_header_html = f"""
+        <div style="width: 1px; height: 35px; background: rgba(255,255,255,0.08);"></div>
+        <div style="text-align: right;">
+            <div style="color: #cbd5e1; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">Technical Trend Status</div>
+            <div style="color: {trend_color}; font-size: 1.5rem; font-weight: 700; text-shadow: 0 0 10px {trend_color}2b;">{trend_text}</div>
+        </div>
+        """
+        
     st.markdown(f"""
     <div style="margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
@@ -73,6 +98,8 @@ if "stats" in st.session_state:
                     <div style="color: #f43f5e; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">52W Lowest</div>
                     <div style="color: #f43f5e; font-size: 1.5rem; font-weight: 700;">{price_symbol}{low_52w:.2f}</div>
                 </div>
+                {rating_header_html}
+                {trend_header_html}
             </div>
         </div>
     </div>
@@ -345,19 +372,9 @@ if "analysis" in st.session_state:
     # ------------------ Row 1: Glassmorphic Metrics Summary Cards (Row 1) ------------------
     price_symbol = "₹" if country == "India" else "$"
     
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     
-    # 1. Price card
-    with col1:
-        st.markdown(f"""
-        <div class="komar-card">
-            <div class="komar-metric-title">CURRENT PRICE</div>
-            <div class="komar-metric-value">{price_symbol}{stats['current_price']:.2f}</div>
-            <div class="komar-metric-status">Resolved: {stats['ticker']}</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    # 2. Optimal Buying Range Card
+    # 1. Optimal Buying Range Card
     buy_range_val = analysis.get('buying_range', 'Calculating...')
     buy_status = analysis.get('buying_range_status', 'N/A')
     
@@ -370,7 +387,7 @@ if "analysis" in st.session_state:
     else:
         buy_status_class = ""
         
-    with col2:
+    with col1:
         st.markdown(f"""
         <div class="komar-card">
             <div class="komar-metric-title">OPTIMAL BUYING RANGE</div>
@@ -379,7 +396,7 @@ if "analysis" in st.session_state:
         </div>
         """, unsafe_allow_html=True)
         
-    # 3. Market Cap Card
+    # 2. Market Cap Card
     mcap_native = stats.get('market_cap', 0.0)
     if mcap_native >= 1e12:
         mcap_text = f"{price_symbol}{mcap_native/1e12:.2f}T"
@@ -390,7 +407,7 @@ if "analysis" in st.session_state:
     else:
         mcap_text = f"{price_symbol}{mcap_native:,.2f}"
         
-    with col3:
+    with col2:
         st.markdown(f"""
         <div class="komar-card">
             <div class="komar-metric-title">MARKET CAPITALIZATION</div>
@@ -399,12 +416,12 @@ if "analysis" in st.session_state:
         </div>
         """, unsafe_allow_html=True)
         
-    # 4. Rating Card (out of 10)
+    # 3. Rating Card (out of 10)
     stars_html = render_rating_stars(analysis['rating'])
-    with col4:
+    with col3:
         st.markdown(f"""
         <div class="komar-card">
-            <div class="komar-metric-title">PATEL RATING</div>
+            <div class="komar-metric-title">RATING</div>
             <div style="margin: 0.1rem 0;">{stars_html}</div>
             <div class="komar-metric-status" style="color:#f59e0b; font-weight:700;">
                 Score: {analysis['rating']}/10 ({analysis['stock_category']})
@@ -692,7 +709,7 @@ elif "stats" not in st.session_state:
     <div style="margin-top: 1rem; font-family: 'Outfit', sans-serif;">
         <!-- Large beautiful glassmorphic welcome card -->
         <div style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1px solid rgba(59, 130, 246, 0.15); border-radius: 16px; padding: 2.5rem; text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); margin-bottom: 2rem;">
-            <h1 style="color: #3b82f6; margin-bottom: 0.5rem; font-size: 3rem; font-weight: 800; text-shadow: 0 0 15px rgba(59, 130, 246, 0.3);">🔍 PATEL STOCK DETECTIVE</h1>
+            <h1 style="color: #3b82f6; margin-bottom: 0.5rem; font-size: 3rem; font-weight: 800; text-shadow: 0 0 15px rgba(59, 130, 246, 0.3);">🔍 READMYVIEWS STOCK DETECTIVE</h1>
             <p style="color: #cbd5e1; font-size: 1.15rem; max-width: 750px; margin: 0 auto; line-height: 1.6; font-weight: 400;">
                 Apply seasoned growth investor <b>Pratik Patel's</b> rigorous, institutional-grade 
                 fundamental and thematic momentum research framework. Powered by live datasets and GenAI.

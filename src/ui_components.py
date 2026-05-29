@@ -280,6 +280,11 @@ def get_glassmorphic_css() -> str:
         display: inline-block !important;
         text-shadow: none !important;
     }
+    
+    /* Fix for Streamlit selectbox / autocomplete dropdown option text visibility in dark theme */
+    .st-emotion-cache-2x5h05, .epifhcv2, [data-testid="stMarkdownContainer"] .epifhcv2 {
+        color: #f8fafc !important; /* Highly visible slate-50 bright color */
+    }
     </style>
     """
 
