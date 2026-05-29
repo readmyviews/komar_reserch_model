@@ -67,39 +67,35 @@ if "stats" in st.session_state:
 <div style="color: {trend_color}; font-size: 1.5rem; font-weight: 700; text-shadow: 0 0 10px {trend_color}2b;">{trend_text}</div>
 </div>"""
         
-    st.markdown(f"""
-    <div style="margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <div>
-                <h1 style="color: #ffffff; margin: 0; font-size: 2.4rem; font-weight: 800; letter-spacing: -0.02em; display: flex; align-items: center; gap: 0.5rem;">
-                    📈 <span style="background: linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{st.session_state["last_search_name"].upper()}</span> 
-                    <span style="font-size: 1.1rem; color: #3b82f6; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); padding: 0.25rem 0.6rem; border-radius: 6px; font-weight: 600;">{stats['ticker']}</span>
-                </h1>
-                <p style="color: #64748b; margin: 0.25rem 0 0 0; font-size: 0.95rem; font-weight: 500;">
-                    Real-Time Market Analytics & Strategic Detective Intelligence
-                </p>
-            </div>
-            <div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;">
-                <div style="text-align: right;">
-                    <div style="color: #64748b; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">Current Price</div>
-                    <div style="color: #3b82f6; font-size: 1.85rem; font-weight: 800; text-shadow: 0 0 10px rgba(59, 130, 246, 0.15);">{price_symbol}{stats['current_price']:.2f}</div>
-                </div>
-                <div style="width: 1px; height: 35px; background: rgba(255,255,255,0.08);"></div>
-                <div style="text-align: right;">
-                    <div style="color: #10b981; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">52W Highest</div>
-                    <div style="color: #10b981; font-size: 1.5rem; font-weight: 700;">{price_symbol}{high_52w:.2f}</div>
-                </div>
-                <div style="width: 1px; height: 35px; background: rgba(255,255,255,0.08);"></div>
-                <div style="text-align: right;">
-                    <div style="color: #f43f5e; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">52W Lowest</div>
-                    <div style="color: #f43f5e; font-size: 1.5rem; font-weight: 700;">{price_symbol}{low_52w:.2f}</div>
-                </div>
-                {rating_header_html}
-                {trend_header_html}
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f"""<div style="margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+<div>
+<h1 style="color: #ffffff; margin: 0; font-size: 2.4rem; font-weight: 800; letter-spacing: -0.02em; display: flex; align-items: center; gap: 0.5rem;">
+📈 <span style="background: linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{st.session_state["last_search_name"].upper()}</span> 
+<span style="font-size: 1.1rem; color: #3b82f6; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); padding: 0.25rem 0.6rem; border-radius: 6px; font-weight: 600;">{stats['ticker']}</span>
+</h1>
+<p style="color: #64748b; margin: 0.25rem 0 0 0; font-size: 0.95rem; font-weight: 500;">
+Real-Time Market Analytics & Strategic Detective Intelligence
+</p>
+</div>
+<div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;">
+<div style="text-align: right;">
+<div style="color: #64748b; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">Current Price</div>
+<div style="color: #3b82f6; font-size: 1.85rem; font-weight: 800; text-shadow: 0 0 10px rgba(59, 130, 246, 0.15);">{price_symbol}{stats['current_price']:.2f}</div>
+</div>
+<div style="width: 1px; height: 35px; background: rgba(255,255,255,0.08);"></div>
+<div style="text-align: right;">
+<div style="color: #10b981; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">52W Highest</div>
+<div style="color: #10b981; font-size: 1.5rem; font-weight: 700;">{price_symbol}{high_52w:.2f}</div>
+</div>
+<div style="width: 1px; height: 35px; background: rgba(255,255,255,0.08);"></div>
+<div style="text-align: right;">
+<div style="color: #f43f5e; font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">52W Lowest</div>
+<div style="color: #f43f5e; font-size: 1.5rem; font-weight: 700;">{price_symbol}{low_52w:.2f}</div>
+</div>{rating_header_html}{trend_header_html}
+</div>
+</div>
+</div>""", unsafe_allow_html=True)
 
 # Sidebar configurations
 st.sidebar.markdown("""
