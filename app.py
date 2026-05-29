@@ -372,7 +372,7 @@ if "analysis" in st.session_state:
     # ------------------ Row 1: Glassmorphic Metrics Summary Cards (Row 1) ------------------
     price_symbol = "₹" if country == "India" else "$"
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     
     # 1. Optimal Buying Range Card
     buy_range_val = analysis.get('buying_range', 'Calculating...')
@@ -413,19 +413,6 @@ if "analysis" in st.session_state:
             <div class="komar-metric-title">MARKET CAPITALIZATION</div>
             <div class="komar-metric-value">{mcap_text}</div>
             <div class="komar-metric-status">Native Valuation</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    # 3. Rating Card (out of 10)
-    stars_html = render_rating_stars(analysis['rating'])
-    with col3:
-        st.markdown(f"""
-        <div class="komar-card">
-            <div class="komar-metric-title">RATING</div>
-            <div style="margin: 0.1rem 0;">{stars_html}</div>
-            <div class="komar-metric-status" style="color:#f59e0b; font-weight:700;">
-                Score: {analysis['rating']}/10 ({analysis['stock_category']})
-            </div>
         </div>
         """, unsafe_allow_html=True)
 
